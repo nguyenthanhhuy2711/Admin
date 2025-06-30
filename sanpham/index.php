@@ -5,9 +5,20 @@ include __DIR__ . '/../includes/connect.php';
 $products = callAPI("getallSanPham");
 $dsDanhMuc = callAPI("getAllMaDanhMuc")["danh_sach_danh_muc"] ?? [];
 
+function getTenDanhMucTheoMa($dsDanhMuc, $ma)
+{
+    foreach ($dsDanhMuc as $dm) {
+        if ($dm['ma_danh_muc'] == $ma) {
+            return $dm['ten_danh_muc'];
+        }
+    }
+    return 'Không xác định';
+}
+
 ?>
 
 <!DOCTYPE html>
+
 <html lang="vi">
 
 <head>
@@ -291,7 +302,8 @@ $dsDanhMuc = callAPI("getAllMaDanhMuc")["danh_sach_danh_muc"] ?? [];
             <thead>
                 <tr>
                     <th class="center" style="width: 50px;">STT</th>
-                    <th style="width: 300px;">Tên sản phẩm</th>
+                    <th style="width: 240px;">Tên sản phẩm</th>
+                    <th style="width: 50px;">Danh mục</th>
                     <th style="width: 150px;">Giá</th>
                     <th style="width: 500px;">Mô tả</th>
                     <th style="width: 130px;">Ảnh</th>
@@ -304,6 +316,8 @@ $dsDanhMuc = callAPI("getAllMaDanhMuc")["danh_sach_danh_muc"] ?? [];
                     foreach ($products as $sp): ?>
                         <?php
                         $ten = $sp['ten_san_pham'] ?? '[Không có tên]';
+                        $danhmuc = $sp['ma_danh_muc'] ?? 0;
+                        $tenDanhMuc = getTenDanhMucTheoMa($dsDanhMuc, $danhmuc);
                         $gia = $sp['gia'] ?? 0;
                         $anh = $sp['anh_san_pham'] ?? '';
                         $mota = $sp['mo_ta'] ?? '';
@@ -312,6 +326,7 @@ $dsDanhMuc = callAPI("getAllMaDanhMuc")["danh_sach_danh_muc"] ?? [];
                         <tr>
                             <td class="center"><?= $i++ ?></td>
                             <td><?= htmlspecialchars($ten) ?></td>
+                            <td><?= htmlspecialchars($tenDanhMuc) ?></td>
                             <td><?= number_format($gia) ?> VND</td>
                             <td><?= htmlspecialchars($mota) ?></td>
                             <td>

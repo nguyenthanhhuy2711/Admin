@@ -7,7 +7,8 @@
 <head>
     <meta charset="UTF-8">
     <title>Trang quản trị</title>
-    <link rel="stylesheet" href="assets/style.css">
+    <link rel="stylesheet" href="assets/style.css?v=<?= time() ?>">
+
 </head>
 
 <body>
@@ -22,12 +23,14 @@
                 <li><a href="index.php?page=taikhoan"><i class="fas fa-user"></i> Tài khoản</a></li>
                 <li><a href="index.php?page=danhmuc"><i class="fas fa-list"></i> Danh mục</a></li>
                 <li><a href="index.php?page=bienthesp"><i class="fas fa-warehouse"></i> Kho</a></li>
+                <li><a href="index.php?page=phieunhap"><i class="fas fa-file-invoice"></i> Phiếu nhập</a></li>
                 <li><a href="index.php?page=mausac"><i class="fas fa-palette"></i> Màu sắc</a></li>
                 <li><a href="index.php?page=anhbienthe"><i class="fas fa-image"></i> Ảnh biến thể</a></li>
                 <li><a href="index.php?page=voucher"><i class="fas fa-ticket-alt"></i> Voucher</a></li>
                 <li><a href="logout.php"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a></li>
             </ul>
         </div>
+
         <div class="main-content">
             <?php
             $page = $_GET['page'] ?? 'dashboard';

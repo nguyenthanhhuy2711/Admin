@@ -55,23 +55,12 @@ $dsMauSac = callAPI("getAllMauSac") ?? [];
             color: #333;
         }
 
-        .popup-form {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.4);
-            z-index: 1000;
-        }
-
         .form-container {
             background: white;
             padding: 20px;
             border-radius: 10px;
-            width: 450px;
-            margin: 80px auto;
+            width: 600px;
+            margin: 10px auto;
             border: 2px solid #007bff;
         }
 
@@ -175,6 +164,90 @@ $dsMauSac = callAPI("getAllMauSac") ?? [];
             border-color: #ccc;
             background-color: #f0f0f0;
         }
+
+        .popup-form {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+
+            /* thêm 2 dòng canh giữa nếu cần */
+            align-items: center;
+            justify-content: center;
+        }
+
+
+        .form-container {
+            background: #f4f4f4;
+            /* Nền trắng tinh */
+            padding: 24px;
+            border-radius: 10px;
+            width: 700px;
+            max-width: 90%;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            border: 1px solid #ccc;
+        }
+
+        #form-them-nhieu-bien-the table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 16px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+        }
+
+        #form-them-nhieu-bien-the th,
+        #form-them-nhieu-bien-the td {
+            border: 1px solid #ccc;
+            padding: 6px;
+            text-align: center;
+            vertical-align: middle;
+            height: auto;
+        }
+
+        #form-them-nhieu-bien-the select,
+        #form-them-nhieu-bien-the input[type="number"] {
+            width: 100%;
+            padding: 6px 8px;
+            font-size: 14px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: white;
+            appearance: auto;
+            /* hiện lại giao diện chuẩn của select */
+        }
+
+        #form-them-nhieu-bien-the thead th {
+            background-color: #007bff;
+            color: white;
+            font-weight: bold;
+        }
+
+        .form-table input {
+            width: 100%;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+
+        .form-table th,
+        .form-table td {
+            padding: 8px;
+            border: 1px solid #ccc;
+            text-align: center;
+        }
+
+        .form-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 16px;
+        }
     </style>
 </head>
 
@@ -192,7 +265,7 @@ $dsMauSac = callAPI("getAllMauSac") ?? [];
                 </select>
             </div>
             <div>
-                <a href="#" class="add-btn" onclick="openFormPopup(); return false;">Thêm số lượng</a>
+                <a href="#" class="add-btn" onclick="openFormPopup(); return false;">Nhập kho</a>
             </div>
         </div>
 
@@ -226,7 +299,6 @@ $dsMauSac = callAPI("getAllMauSac") ?? [];
                 <?php endif; ?>
             </tbody>
         </table>
-
         <div style="margin-top: 20px; display: flex; justify-content: space-between;" id="paginationWrapper">
             <ul class="pagination" style="display: flex; list-style: none; padding: 0; gap: 4px;"></ul>
         </div>
@@ -234,89 +306,113 @@ $dsMauSac = callAPI("getAllMauSac") ?? [];
 
     <div id="popupForm" class="popup-form">
         <div class="form-container">
-            <h3>Thêm biến thể sản phẩm</h3>
-            <div id="form-error"></div>
-            <form id="form-them-bien-the">
-                <label>Sản phẩm:</label>
-                <select name="ma_san_pham" id="selectSanPham" required
-                    onchange="layMauTheoSanPham()"
-                    oninvalid="this.setCustomValidity('Vui lòng chọn sản phẩm')"
-                    oninput="this.setCustomValidity('')">
-                    <option value="">-- Chọn sản phẩm --</option>
-                    <?php foreach ($dsSanPham as $sp): ?>
-                        <option value="<?= $sp['ma_san_pham'] ?>"><?= htmlspecialchars($sp['ten_san_pham']) ?></option>
-                    <?php endforeach; ?>
-                </select>
+            <h3>Phiếu nhập kho</h3>
+            <form id="form-them-nhieu-bien-the">
+                <table class="form-table">
+                    <thead>
+                        <tr style="background-color: #007bff; color: white;">
+                            <th style="border-top-left-radius: 8px;">Người nhập</th>
+                            <th>Ngày nhập</th>
+                            <th style="border-top-right-radius: 8px;">Tổng số lượng</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <input type="text" readonly
+                                    value="<?= $_SESSION['admin_name'] ?? 'Không xác định' ?>">
+                            </td>
+                            <td>
+                                <input type="text" readonly name="ngay_nhap" id="ngayNhap">
+                            </td>
+                            <td>
+                                <input type="number" readonly id="tongSoLuong" value="0">
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
 
-                <label>Kích thước:</label>
-                <select name="kich_thuoc" required
-                    oninvalid="this.setCustomValidity('Vui lòng chọn kích thước')"
-                    oninput="this.setCustomValidity('')">
-                    <option value="">-- Chọn size --</option>
-                    <?php for ($i = 35; $i <= 46; $i++): ?>
-                        <option value="<?= $i ?>"><?= $i ?></option>
-                    <?php endfor; ?>
-                </select>
 
-                <label>Màu sắc:</label>
-                <select name="ma_mau" id="selectMau" required
-                    oninvalid="this.setCustomValidity('Vui lòng chọn màu sắc')"
-                    oninput="this.setCustomValidity('')">
-                    <option value="">-- Chọn màu sắc --</option>
-                </select>
-
-                <label>Số lượng tồn:</label>
-                <input type="number" name="so_luong_ton" required min="1"
-                    oninvalid="this.setCustomValidity('Vui lòng nhập số lượng tồn (lớn hơn 0)')"
-                    oninput="this.setCustomValidity('')">
-
-                <button type="submit">Thêm</button>
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 16px;">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px">STT</th>
+                            <th style="width: 100px">Sản phẩm</th>
+                            <th style="width: 100px">Màu sắc</th>
+                            <th style="width: 100px">Kích thước</th>
+                            <th style="width: 50px">Số lượng</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php for ($i = 1; $i <= 7; $i++): ?>
+                            <tr>
+                                <td><?= $i ?></td>
+                                <td>
+                                    <select name="ma_san_pham[]" id="sp-<?= $i ?>" onchange="layMauTheoSanPhamTheoDong(<?= $i ?>)">
+                                        <option value="">--Chọn--</option>
+                                        <?php foreach ($dsSanPham as $sp): ?>
+                                            <option value="<?= $sp['ma_san_pham'] ?>"><?= $sp['ten_san_pham'] ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </td>
+                                <td>
+                                    <select name="ma_mau[]" id="mau-<?= $i ?>" class="select-mau">
+                                        <option value="">--Chọn--</option>
+                                        <!-- sẽ load màu theo sản phẩm tương ứng -->
+                                    </select>
+                                </td>
+                                <td>
+                                    <select name="kich_thuoc[]">
+                                        <option value="">--Chọn--</option>
+                                        <?php for ($size = 35; $size <= 46; $size++): ?>
+                                            <option value="<?= $size ?>"><?= $size ?></option>
+                                        <?php endfor; ?>
+                                    </select>
+                                </td>
+                                <td>
+                                    <input type="number" name="so_luong_ton[]" min="1">
+                                </td>
+                            </tr>
+                        <?php endfor; ?>
+                    </tbody>
+                </table>
+                <button type="submit">Nhập tất cả</button>
                 <button type="button" onclick="closeFormPopup()">Hủy</button>
             </form>
-
         </div>
     </div>
+
 
     <div id="toast" class="toast hidden"></div>
 
     <script>
-        function layMauTheoSanPham() {
-            const maSanPham = document.getElementById("selectSanPham").value;
-            const selectMau = document.getElementById("selectMau");
+        function layMauTheoSanPhamTheoDong(index) {
+            const selectSanPham = document.getElementById(`sp-${index}`);
+            const selectMau = document.getElementById(`mau-${index}`);
 
-            console.log("🔍 Đang lấy màu cho sản phẩm:", maSanPham);
-            selectMau.innerHTML = '<option>Đang tải màu...</option>';
-
+            const maSanPham = selectSanPham.value;
             if (!maSanPham) {
-                selectMau.innerHTML = '<option value="">-- Chọn màu sắc --</option>';
+                selectMau.innerHTML = '<option value="">--Chọn--</option>';
                 return;
             }
 
+            selectMau.innerHTML = '<option>Đang tải...</option>';
+
             fetch(`bienthesp/lay_mau.php?maSanPham=${maSanPham}`)
-                .then(res => {
-                    if (!res.ok) throw new Error("Lỗi khi gọi API");
-                    return res.json();
-                })
+                .then(res => res.json())
                 .then(data => {
-                    console.log("✅ Dữ liệu màu:", data);
-                    if (!Array.isArray(data) || data.length === 0) {
-                        selectMau.innerHTML = '<option value="">Không có màu khả dụng</option>';
-                    } else {
-                        selectMau.innerHTML = '<option value="">-- Chọn màu sắc --</option>';
-                        data.forEach(mau => {
-                            const option = document.createElement("option");
-                            option.value = mau.ma_mau;
-                            option.textContent = mau.ten_mau;
-                            selectMau.appendChild(option);
-                        });
-                    }
+                    selectMau.innerHTML = '<option value="">--Chọn--</option>';
+                    data.forEach(mau => {
+                        const option = document.createElement("option");
+                        option.value = mau.ma_mau;
+                        option.textContent = mau.ten_mau;
+                        selectMau.appendChild(option);
+                    });
                 })
-                .catch(err => {
-                    console.error("❌ Lỗi khi tải màu:", err);
+                .catch(() => {
                     selectMau.innerHTML = '<option value="">Không tải được màu</option>';
                 });
         }
-
 
         function openFormPopup() {
             document.getElementById("popupForm").style.display = "block";
@@ -337,7 +433,7 @@ $dsMauSac = callAPI("getAllMauSac") ?? [];
             }, 3000);
         }
 
-        document.getElementById("form-them-bien-the").addEventListener("submit", function(e) {
+        document.getElementById("form-them-nhieu-bien-the").addEventListener("submit", function(e) {
             e.preventDefault();
             const formData = new FormData(e.target);
 
@@ -360,66 +456,81 @@ $dsMauSac = callAPI("getAllMauSac") ?? [];
                 });
         });
 
-        function filterByProduct() {
-            const select = document.getElementById("selectFilter");
-            const selectedName = select.value.toLowerCase();
-            const rows = document.querySelectorAll("table tbody tr");
-
-            rows.forEach(row => {
-                row.style.display = "";
-                const tenSanPham = row.cells[1].innerText.toLowerCase();
-                if (selectedName !== "" && tenSanPham !== selectedName) {
-                    row.style.display = "none";
-                }
-            });
-        }
-
         let currentPage = 1;
         const rowsPerPage = 10;
-        const table = document.getElementById("tableBody");
-        const rows = Array.from(table.querySelectorAll("tr"));
-        const totalPages = Math.ceil(rows.length / rowsPerPage);
+        const allRows = Array.from(document.querySelectorAll("#tableBody tr"));
+        let filteredRows = [...allRows];
 
         function renderTablePage() {
-            rows.forEach((row, index) => {
-                row.style.display = (index >= (currentPage - 1) * rowsPerPage && index < currentPage * rowsPerPage) ? "" : "none";
+            filteredRows.forEach((row, index) => {
+                row.style.display = (index >= (currentPage - 1) * rowsPerPage && index < currentPage * rowsPerPage) ?
+                    "" : "none";
             });
-            renderPagination();
+            renderPagination(Math.ceil(filteredRows.length / rowsPerPage));
         }
 
-        function renderPagination() {
+        function renderPagination(totalPages) {
             const pagination = document.querySelector(".pagination");
             pagination.innerHTML = "";
 
-            // Previous
             const prevLi = document.createElement("li");
             prevLi.className = currentPage === 1 ? "disabled" : "";
-            prevLi.innerHTML = `<a href="#" onclick="changePage(${currentPage - 1})">Previous</a>`;
+            prevLi.innerHTML = `<a href="#" onclick="event.preventDefault(); changePage(${currentPage - 1})">Previous</a>`;
             pagination.appendChild(prevLi);
 
-            // Số trang
             for (let i = 1; i <= totalPages; i++) {
                 const li = document.createElement("li");
                 li.className = i === currentPage ? "active" : "";
-                li.innerHTML = `<a href="#" onclick="changePage(${i})">${i}</a>`;
+                li.innerHTML = `<a href="#" onclick="event.preventDefault(); changePage(${i})">${i}</a>`;
                 pagination.appendChild(li);
             }
 
-            // Next
             const nextLi = document.createElement("li");
             nextLi.className = currentPage === totalPages ? "disabled" : "";
-            nextLi.innerHTML = `<a href="#" onclick="changePage(${currentPage + 1})">Next</a>`;
+            nextLi.innerHTML = `<a href="#" onclick="event.preventDefault(); changePage(${currentPage + 1})">Next</a>`;
             pagination.appendChild(nextLi);
         }
 
         function changePage(page) {
+            const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
             if (page < 1 || page > totalPages) return;
             currentPage = page;
             renderTablePage();
         }
 
-        // Tải lần đầu
+        function filterByProduct() {
+            const select = document.getElementById("selectFilter");
+            const selectedName = select.value.toLowerCase();
+
+            filteredRows = allRows.filter(row => {
+                const tenSanPham = row.cells[1].innerText.toLowerCase();
+                const match = selectedName === "" || tenSanPham === selectedName;
+                row.style.display = match ? "" : "none";
+                return match;
+            });
+
+            currentPage = 1; // reset về trang đầu
+            renderTablePage();
+        }
+
+        // Gọi lần đầu
         renderTablePage();
+        document.getElementById("ngayNhap").value = new Date().toLocaleString("vi-VN");
+
+        function tinhTongSoLuong() {
+            let tong = 0;
+            const inputs = document.querySelectorAll('input[name="so_luong_ton[]"]');
+            inputs.forEach(input => {
+                const val = parseInt(input.value);
+                if (!isNaN(val)) tong += val;
+            });
+            document.getElementById("tongSoLuong").value = tong;
+        }
+
+        // Gắn sự kiện input
+        document.querySelectorAll('input[name="so_luong_ton[]"]').forEach(input => {
+            input.addEventListener("input", tinhTongSoLuong);
+        });
     </script>
 </body>
 

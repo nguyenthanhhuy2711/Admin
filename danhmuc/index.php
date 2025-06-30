@@ -213,13 +213,13 @@ $dsDanhMuc = callAPI("getAllMaDanhMuc")["danh_sach_danh_muc"] ?? [];
                             <td class="center"><?= htmlspecialchars($dm['ten_danh_muc']) ?></td>
                             <td class="center"><?= htmlspecialchars($dm['ngay_tao'] ?? '-') ?></td>
                             <td class="center">
-                                <!-- <a href="#" class="btn-icon btn-edit" title="Sửa" onclick="openEditPopup(<?= $dm['ma_danh_muc'] ?>, '<?= htmlspecialchars($dm['ten_danh_muc']) ?>'); return false;">
-                                    <i class="fas fa-edit"></i>
-                                </a> -->
+                                <!-- Nút xoá -->
                                 <a href="danhmuc/xoa.php?id=<?= $dm['ma_danh_muc'] ?>" class="btn-icon btn-delete" title="Xoá" onclick="return confirm('Xoá danh mục này?')">
                                     <i class="fas fa-trash-alt"></i>
                                 </a>
                             </td>
+
+
                         </tr>
                     <?php endforeach; ?>
                 <?php else: ?>

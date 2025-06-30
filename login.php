@@ -56,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['admin_logged'] = true;
             $_SESSION['admin_id'] = $user['ma_nguoi_dung'];
             $_SESSION['admin_email'] = $user['email'];
-            $_SESSION['admin_name'] = $user['ten'] ?? '';
+            $_SESSION['admin_name'] = $user['ten_nguoi_dung'] ?? ''; // SỬA LẠI Ở ĐÂY
 
             header("Location: index.php");
             exit;
