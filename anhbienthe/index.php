@@ -9,6 +9,11 @@ $dsMauSac = callAPI("getAllMauSac") ?? [];
 
 <!DOCTYPE html>
 <html lang="vi">
+<script>
+    const dsAnhRaw = <?= json_encode($dsAnh) ?>;
+    const dsSanPham = <?= json_encode($dsSanPham) ?>;
+    const dsMauSac = <?= json_encode($dsMauSac) ?>;
+</script>
 
 <head>
     <meta charset="UTF-8">
@@ -359,8 +364,8 @@ $dsMauSac = callAPI("getAllMauSac") ?? [];
                         <td colspan="5">Không có dữ liệu ảnh biến thể</td>
                     </tr>
                 <?php endif; ?>
-                <div id="toast" class="toast hidden"></div>
             </tbody>
+            <div id="toast" class="toast hidden"></div>
         </table>
         <div style="margin-top: 20px; display: flex; justify-content: space-between;" id="paginationWrapper">
             <ul class="pagination" style="display: flex; list-style: none; padding: 0; gap: 4px;"></ul>
@@ -375,65 +380,87 @@ $dsMauSac = callAPI("getAllMauSac") ?? [];
             document.getElementById("popupForm").style.display = "none";
         }
 
-        function filterByProduct() {
-            const select = document.getElementById("selectFilter");
-            const selectedName = select.value.toLowerCase();
-            const rows = document.querySelectorAll("table tbody tr");
-
-            rows.forEach(row => {
-                row.style.display = ""; // 👈 Hiển thị lại tất cả dòng trước khi lọc
-                const tenSanPham = row.cells[1].innerText.toLowerCase();
-                if (selectedName !== "" && tenSanPham !== selectedName) {
-                    row.style.display = "none";
-                }
-            });
-        }
         let currentPage = 1;
         const rowsPerPage = 6;
-        const table = document.getElementById("tableBody");
-        const rows = Array.from(table.querySelectorAll("tr"));
-        const totalPages = Math.ceil(rows.length / rowsPerPage);
 
-        function renderTablePage() {
-            rows.forEach((row, index) => {
-                row.style.display = (index >= (currentPage - 1) * rowsPerPage && index < currentPage * rowsPerPage) ? "" : "none";
+        function getFilteredRows() {
+            const selectedProduct = document.getElementById("selectFilter").value.toLowerCase();
+
+            return dsAnhRaw.filter(anh => {
+                const sp = dsSanPham.find(sp => sp.ma_san_pham === anh.ma_san_pham);
+                const tenSanPham = sp?.ten_san_pham?.toLowerCase() || "";
+                return !selectedProduct || tenSanPham === selectedProduct;
             });
-            renderPagination();
         }
 
-        function renderPagination() {
+
+        function renderTablePage(page = currentPage) {
+            const filteredRows = getFilteredRows();
+            const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
+            if (page > totalPages) page = totalPages || 1;
+            currentPage = page;
+
+            const tableBody = document.getElementById("tableBody");
+            tableBody.innerHTML = "";
+
+            const start = (currentPage - 1) * rowsPerPage;
+            const rowsToRender = filteredRows.slice(start, end = currentPage * rowsPerPage);
+
+            rowsToRender.forEach((anh, index) => {
+                const sp = dsSanPham.find(sp => sp.ma_san_pham === anh.ma_san_pham);
+                const mau = dsMauSac.find(m => m.ma_mau === anh.ma_mau);
+                const row = document.createElement("tr");
+
+                row.innerHTML = `
+            <td class="center">${start + index + 1}</td>
+            <td>${sp?.ten_san_pham || ""}</td>
+            <td class="center">${mau?.ten_mau || ""}</td>
+            <td class="center"><img src="${'<?= $baseUrl ?>' + anh.duong_dan}" alt="Ảnh"></td>
+            <td class="center">
+                <a href="/admin/anhbienthe/xoa.php?ma_san_pham=${anh.ma_san_pham}&ma_mau=${anh.ma_mau}"
+                    class="btn-icon btn-delete"
+                    onclick="return confirm('Xoá ảnh này?')">
+                    <i class="fas fa-trash-alt"></i>
+                </a>
+            </td>
+        `;
+                tableBody.appendChild(row);
+            });
+
+            renderPagination(totalPages);
+        }
+
+
+        function renderPagination(totalPages) {
             const pagination = document.querySelector(".pagination");
             pagination.innerHTML = "";
 
-            // Previous
-            const prevLi = document.createElement("li");
-            prevLi.className = currentPage === 1 ? "disabled" : "";
-            prevLi.innerHTML = `<a href="#" onclick="changePage(${currentPage - 1})">Previous</a>`;
-            pagination.appendChild(prevLi);
-
-            // Số trang
-            for (let i = 1; i <= totalPages; i++) {
+            const createPageItem = (label, page, disabled = false, active = false) => {
                 const li = document.createElement("li");
-                li.className = i === currentPage ? "active" : "";
-                li.innerHTML = `<a href="#" onclick="changePage(${i})">${i}</a>`;
-                pagination.appendChild(li);
-            }
+                li.className = `${disabled ? "disabled" : ""} ${active ? "active" : ""}`;
+                li.innerHTML = `<a href="#" onclick="changePage(${page}); return false;">${label}</a>`;
+                return li;
+            };
 
-            // Next
-            const nextLi = document.createElement("li");
-            nextLi.className = currentPage === totalPages ? "disabled" : "";
-            nextLi.innerHTML = `<a href="#" onclick="changePage(${currentPage + 1})">Next</a>`;
-            pagination.appendChild(nextLi);
+            pagination.appendChild(createPageItem("Previous", currentPage - 1, currentPage === 1));
+            for (let i = 1; i <= totalPages; i++) {
+                pagination.appendChild(createPageItem(i, i, false, i === currentPage));
+            }
+            pagination.appendChild(createPageItem("Next", currentPage + 1, currentPage === totalPages));
         }
 
         function changePage(page) {
+            const filteredRows = getFilteredRows();
+            const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
             if (page < 1 || page > totalPages) return;
             currentPage = page;
             renderTablePage();
         }
 
-        // Tải lần đầu
-        renderTablePage();
+        function filterByProduct() {
+            currentPage = 1;
+            renderTablePage();
+        }
 
         function showToast(message, isError = false) {
             const toast = document.getElementById("toast");
@@ -458,6 +485,8 @@ $dsMauSac = callAPI("getAllMauSac") ?? [];
                 showToast(errorMsg, true);
                 sessionStorage.removeItem("toastError");
             }
+
+            renderTablePage(); // ✅ render lần đầu
         });
     </script>
 

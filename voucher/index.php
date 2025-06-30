@@ -2,6 +2,8 @@
 include __DIR__ . '/../includes/check_login.php';
 include __DIR__ . '/../includes/connect.php';
 
+callAPI("autoUpdateTrangThaiVoucher", "PUT");
+
 $dsVoucher = callAPI("getAllVoucher") ?? [];
 ?>
 
@@ -190,9 +192,41 @@ $dsVoucher = callAPI("getAllVoucher") ?? [];
     <div class="main-content">
         <h2><i class="fas fa-ticket-alt"></i> Danh sách Voucher</h2>
         <!-- Nút mở popup -->
-        <div style="text-align: right">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <div>
+                <label for="filterStatus">Lọc theo trạng thái:</label>
+                <select id="filterStatus" onchange="filterByStatus()" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #ccc;">
+                    <option value="">Tất cả</option>
+                    <option value="hoat_dong">Hoạt động</option>
+                    <option value="tam_ngung">Tạm ngưng</option>
+                </select>
+            </div>
             <a href="#" class="add-btn" onclick="openFormPopup(); return false;">Thêm voucher</a>
         </div>
+
+        <!-- POPUP SỬA VOUCHER -->
+        <!-- POPUP SỬA VOUCHER -->
+        <div id="editPopup" class="popup-form" style="display: none;">
+            <div class="form-container">
+                <h3>Sửa thời gian voucher</h3>
+                <form action="voucher/sua.php" method="post">
+                    <input type="hidden" name="id" id="edit_id">
+
+                    <label>Ngày bắt đầu:</label>
+                    <input type="datetime-local" name="ngay_bat_dau" id="edit_ngay_bat_dau" required>
+
+                    <label>Ngày kết thúc:</label>
+                    <input type="datetime-local" name="ngay_ket_thuc" id="edit_ngay_ket_thuc" required>
+
+                    <div style="text-align:right; margin-top: 10px">
+                        <button type="submit">Cập nhật</button>
+                        <button type="button" onclick="closeEditPopup()">Hủy</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+
 
         <!-- Popup form -->
         <div id="popupForm" class="popup-form">
@@ -273,7 +307,6 @@ $dsVoucher = callAPI("getAllVoucher") ?? [];
                                 oninput="this.setCustomValidity('')">
                                 <option value="hoat_dong">Hoạt động</option>
                                 <option value="tam_ngung">Tạm ngưng</option>
-                                <option value="het_han">Hết hạn</option>
                             </select>
                         </div>
                     </div>
@@ -300,7 +333,7 @@ $dsVoucher = callAPI("getAllVoucher") ?? [];
                     <th style="width: 150px">Ngày kết thúc</th>
                     <th style="width: 100px">Ảnh</th>
                     <th style="width: 100px">Trạng thái</th>
-                    <th style="width: 120px">Thao tác</th>
+                    <th style="width: 118.5px">Thao tác</th>
                 </tr>
             </thead>
 
@@ -328,11 +361,9 @@ $dsVoucher = callAPI("getAllVoucher") ?? [];
                             </td>
                             <td class="center"><?= $v['trang_thai'] ?></td>
                             <td class="center">
-                                <a href="sua.php?id=<?= $v['id'] ?>" class="btn-icon btn-edit" title="Sửa">
+                                <a href="#" class="btn-icon btn-edit" title="Sửa"
+                                    onclick="openEditPopup(<?= $v['id'] ?>, '<?= $v['ngay_bat_dau'] ?>', '<?= $v['ngay_ket_thuc'] ?>'); return false;">
                                     <i class="fas fa-edit"></i>
-                                </a>
-                                <a href="xoa.php?id=<?= $v['id'] ?>" class="btn-icon btn-delete" title="Xoá" onclick="return confirm('Xoá voucher này?')">
-                                    <i class="fas fa-trash-alt"></i>
                                 </a>
                             </td>
                         </tr>
@@ -358,30 +389,61 @@ $dsVoucher = callAPI("getAllVoucher") ?? [];
             document.getElementById('popupForm').style.display = 'none';
         }
 
-        let currentPage = 1;
-        const rowsPerPage = 6;
-        const table = document.getElementById("tableBody");
-        const rows = Array.from(table.querySelectorAll("tr"));
-        const totalPages = Math.ceil(rows.length / rowsPerPage);
+        function openEditPopup(id, start, end) {
+            document.getElementById('edit_id').value = id;
 
-        function renderTablePage() {
-            rows.forEach((row, index) => {
-                row.style.display = (index >= (currentPage - 1) * rowsPerPage && index < currentPage * rowsPerPage) ? "" : "none";
-            });
-            renderPagination();
+            const startInput = document.getElementById('edit_ngay_bat_dau');
+            const endInput = document.getElementById('edit_ngay_ket_thuc');
+
+            startInput.value = start ? start.replace(' ', 'T') : '';
+            endInput.value = end ? end.replace(' ', 'T') : '';
+
+            document.getElementById('editPopup').style.display = 'block';
         }
 
-        function renderPagination() {
+
+        function closeEditPopup() {
+            document.getElementById('editPopup').style.display = 'none';
+        }
+
+        let currentPage = 1;
+        const rowsPerPage = 6;
+
+        function getFilteredRows() {
+            const status = document.getElementById("filterStatus").value;
+            const allRows = Array.from(document.querySelectorAll("#tableBody tr"));
+            return allRows.filter(row => {
+                const statusText = row.children[11]?.innerText.trim();
+                return !status || statusText === status;
+            });
+        }
+
+        function renderTablePage() {
+            const filteredRows = getFilteredRows();
+            const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
+
+            // Ẩn tất cả dòng trước
+            document.querySelectorAll("#tableBody tr").forEach(row => row.style.display = "none");
+
+            // Hiện dòng phù hợp theo trang
+            filteredRows.forEach((row, index) => {
+                if (index >= (currentPage - 1) * rowsPerPage && index < currentPage * rowsPerPage) {
+                    row.style.display = "";
+                }
+            });
+
+            renderPagination(totalPages);
+        }
+
+        function renderPagination(totalPages) {
             const pagination = document.querySelector(".pagination");
             pagination.innerHTML = "";
 
-            // Previous
             const prevLi = document.createElement("li");
             prevLi.className = currentPage === 1 ? "disabled" : "";
             prevLi.innerHTML = `<a href="#" onclick="changePage(${currentPage - 1})">Previous</a>`;
             pagination.appendChild(prevLi);
 
-            // Số trang
             for (let i = 1; i <= totalPages; i++) {
                 const li = document.createElement("li");
                 li.className = i === currentPage ? "active" : "";
@@ -389,7 +451,6 @@ $dsVoucher = callAPI("getAllVoucher") ?? [];
                 pagination.appendChild(li);
             }
 
-            // Next
             const nextLi = document.createElement("li");
             nextLi.className = currentPage === totalPages ? "disabled" : "";
             nextLi.innerHTML = `<a href="#" onclick="changePage(${currentPage + 1})">Next</a>`;
@@ -397,13 +458,12 @@ $dsVoucher = callAPI("getAllVoucher") ?? [];
         }
 
         function changePage(page) {
+            const filteredRows = getFilteredRows();
+            const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
             if (page < 1 || page > totalPages) return;
             currentPage = page;
             renderTablePage();
         }
-
-        // Tải lần đầu
-        renderTablePage();
 
         function showToast(message, isError = false) {
             const toast = document.createElement("div");
@@ -442,7 +502,14 @@ $dsVoucher = callAPI("getAllVoucher") ?? [];
                 showToast(errorMsg, true);
                 sessionStorage.removeItem("toastError");
             }
+
+            renderTablePage(); // render lần đầu
         });
+
+        function filterByStatus() {
+            currentPage = 1;
+            renderTablePage();
+        }
     </script>
 
 </body>

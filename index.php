@@ -16,7 +16,7 @@
             <div class="logo">DOUBLE H ADMIN</div>
             <ul>
                 <hr style="border: none; height: 1px; background-color: #ccc;">
-                <li><a href=""><i class="fas fa-chart-line"></i> Dashboard</a></li>
+                <li><a href="index.php?page=dashboard"><i class="fas fa-chart-line"></i> Dashboard</a></li>
                 <li><a href="index.php?page=sanpham"><i class="fas fa-box"></i> Sản phẩm</a></li>
                 <li><a href="index.php?page=donhang"><i class="fas fa-receipt"></i> Đơn hàng</a></li>
                 <li><a href="index.php?page=taikhoan"><i class="fas fa-user"></i> Tài khoản</a></li>
@@ -30,7 +30,7 @@
         </div>
         <div class="main-content">
             <?php
-            $page = $_GET['page'] ?? 'sanpham';
+            $page = $_GET['page'] ?? 'dashboard';
             $path = __DIR__ . "/$page/index.php";
             if (file_exists($path)) {
                 include $path;

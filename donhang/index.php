@@ -327,22 +327,14 @@ $donHangs = callAPI("adminGetAllDonHang") ?? [];
                 .then(res => res.json())
                 .then(data => {
                     showToast(data.message, !data.success);
-
                     if (data.success) {
-                        setTimeout(() => {
-                            location.reload(); // ✅ Reload sau 1.5 giây
-                        }, 1500);
+                        setTimeout(() => location.reload(), 1500);
                     }
                 })
                 .catch(err => {
                     console.error("Lỗi cập nhật:", err);
                     showToast("Có lỗi xảy ra khi cập nhật", true);
                 });
-        }
-
-
-        function closePopup() {
-            document.getElementById('popupCapNhat').style.display = 'none';
         }
 
         document.getElementById('capnhatForm').addEventListener('submit', function(e) {
@@ -365,47 +357,51 @@ $donHangs = callAPI("adminGetAllDonHang") ?? [];
                     console.error(err);
                 });
         });
-        document.getElementById("filterTrangThai").addEventListener("change", function() {
-            const selectedStatus = this.value;
-            const rows = document.querySelectorAll("tbody tr");
 
-            rows.forEach(row => {
-                const statusCell = row.children[11]; // Cột trạng thái
-                if (!statusCell) return;
-
-                const trangThai = statusCell.textContent.trim();
-
-                if (selectedStatus === "tatca" || trangThai === selectedStatus) {
-                    row.style.display = "";
-                } else {
-                    row.style.display = "none";
-                }
-            });
-        });
-        let currentPage = 1;
-        const rowsPerPage = 5;
-        const table = document.getElementById("tableBody");
-        const rows = Array.from(table.querySelectorAll("tr"));
-        const totalPages = Math.ceil(rows.length / rowsPerPage);
-
-        function renderTablePage() {
-            rows.forEach((row, index) => {
-                row.style.display = (index >= (currentPage - 1) * rowsPerPage && index < currentPage * rowsPerPage) ? "" : "none";
-            });
-            renderPagination();
+        function closePopup() {
+            document.getElementById('popupCapNhat').style.display = 'none';
         }
 
-        function renderPagination() {
+        let currentPage = 1;
+        const rowsPerPage = 5;
+
+        function getFilteredRows() {
+            const selectedStatus = document.getElementById("filterTrangThai").value;
+            const allRows = Array.from(document.querySelectorAll("#tableBody tr"));
+            return allRows.filter(row => {
+                const statusCell = row.children[11];
+                if (!statusCell) return false;
+                const trangThai = statusCell.textContent.trim();
+                return selectedStatus === "tatca" || trangThai === selectedStatus;
+            });
+        }
+
+        function renderTablePage() {
+            const filteredRows = getFilteredRows();
+            const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
+
+            // Ẩn tất cả
+            document.querySelectorAll("#tableBody tr").forEach(row => row.style.display = "none");
+
+            // Hiện theo trang
+            filteredRows.forEach((row, index) => {
+                if (index >= (currentPage - 1) * rowsPerPage && index < currentPage * rowsPerPage) {
+                    row.style.display = "";
+                }
+            });
+
+            renderPagination(totalPages);
+        }
+
+        function renderPagination(totalPages) {
             const pagination = document.querySelector(".pagination");
             pagination.innerHTML = "";
 
-            // Previous
             const prevLi = document.createElement("li");
             prevLi.className = currentPage === 1 ? "disabled" : "";
             prevLi.innerHTML = `<a href="#" onclick="changePage(${currentPage - 1})">Previous</a>`;
             pagination.appendChild(prevLi);
 
-            // Số trang
             for (let i = 1; i <= totalPages; i++) {
                 const li = document.createElement("li");
                 li.className = i === currentPage ? "active" : "";
@@ -413,7 +409,6 @@ $donHangs = callAPI("adminGetAllDonHang") ?? [];
                 pagination.appendChild(li);
             }
 
-            // Next
             const nextLi = document.createElement("li");
             nextLi.className = currentPage === totalPages ? "disabled" : "";
             nextLi.innerHTML = `<a href="#" onclick="changePage(${currentPage + 1})">Next</a>`;
@@ -421,13 +416,11 @@ $donHangs = callAPI("adminGetAllDonHang") ?? [];
         }
 
         function changePage(page) {
+            const totalPages = Math.ceil(getFilteredRows().length / rowsPerPage);
             if (page < 1 || page > totalPages) return;
             currentPage = page;
             renderTablePage();
         }
-
-        // Tải lần đầu
-        renderTablePage();
 
         function hienChiTietDonHang(maDonHang) {
             document.getElementById("chiTietContent").innerHTML = "Đang tải...";
@@ -472,6 +465,11 @@ $donHangs = callAPI("adminGetAllDonHang") ?? [];
             }, 3000);
         }
 
+        document.getElementById("filterTrangThai").addEventListener("change", function() {
+            currentPage = 1;
+            renderTablePage();
+        });
+
         window.addEventListener("DOMContentLoaded", () => {
             const successMsg = sessionStorage.getItem("toastSuccess");
             const errorMsg = sessionStorage.getItem("toastError");
@@ -485,8 +483,11 @@ $donHangs = callAPI("adminGetAllDonHang") ?? [];
                 showToast(errorMsg, true);
                 sessionStorage.removeItem("toastError");
             }
+
+            renderTablePage(); // Tải dữ liệu ban đầu
         });
     </script>
+
 </body>
 
 </html>

@@ -237,13 +237,13 @@ $users = callAPI("getallUser");
             <thead>
                 <tr>
                     <th class="center" style="width: 50px;">STT</th>
-                    <th style="width: 250px;">Tên người dùng</th>
+                    <th style="width: 210px;">Tên người dùng</th>
                     <th style="width: 200px;">Email</th>
                     <th style="width: 100px;">SĐT</th>
                     <th style="width: 250px;">Địa chỉ</th>
                     <th style="width: 30px;">Vai trò</th>
                     <th style="width: 200px;">Ngày tạo</th>
-                    <th class="center" style="width: 128px;">Thao tác</th>
+                    <th class="center" style="width: 127px;">Thao tác</th>
                 </tr>
 
             </thead>

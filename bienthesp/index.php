@@ -203,7 +203,7 @@ $dsMauSac = callAPI("getAllMauSac") ?? [];
                     <th style="width: 300px;">Sản phẩm</th>
                     <th style="width: 200px;">Kích thước</th>
                     <th style="width: 200px;">Màu sắc</th>
-                    <th style="width: 295px;">Số lượng tồn</th>
+                    <th style="width: 295.5px;">Số lượng tồn</th>
                 </tr>
 
             </thead>
