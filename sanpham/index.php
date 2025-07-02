@@ -291,8 +291,11 @@ function getTenDanhMucTheoMa($dsDanhMuc, $ma)
 
                     <img id="previewImage" src="" alt="Ảnh hiện tại" style="max-height: 100px; margin-bottom: 16px; display: none; border: 1px solid #ccc; border-radius: 6px;">
 
-                    <button type="submit" id="formSubmitBtn">Thêm</button>
-                    <button type="button" onclick="closeFormPopup()">Hủy</button>
+                    <div style="text-align: right; margin-top: 16px;">
+                        <button type="submit" id="formSubmitBtn">Thêm</button>
+                        <button type="button" onclick="closeFormPopup()">Hủy</button>
+                    </div>
+
                 </form>
 
             </div>
@@ -303,11 +306,11 @@ function getTenDanhMucTheoMa($dsDanhMuc, $ma)
                 <tr>
                     <th class="center" style="width: 50px;">STT</th>
                     <th style="width: 240px;">Tên sản phẩm</th>
-                    <th style="width: 50px;">Danh mục</th>
+                    <th style="width: 80px;">Danh mục</th>
                     <th style="width: 150px;">Giá</th>
-                    <th style="width: 500px;">Mô tả</th>
+                    <th style="width: 450px;">Mô tả</th>
                     <th style="width: 130px;">Ảnh</th>
-                    <th style="width: 120px;">Thao tác</th>
+                    <th style="width: 150px;">Thao tác</th>
                 </tr>
             </thead>
             <tbody id="tableBody">
@@ -327,7 +330,7 @@ function getTenDanhMucTheoMa($dsDanhMuc, $ma)
                             <td class="center"><?= $i++ ?></td>
                             <td><?= htmlspecialchars($ten) ?></td>
                             <td><?= htmlspecialchars($tenDanhMuc) ?></td>
-                            <td><?= number_format($gia) ?> VND</td>
+                            <td><?= number_format($gia, 0, '', '.') ?> VND</td>
                             <td><?= htmlspecialchars($mota) ?></td>
                             <td>
                                 <?php if ($anh): ?>
@@ -337,6 +340,10 @@ function getTenDanhMucTheoMa($dsDanhMuc, $ma)
                                 <?php endif; ?>
                             </td>
                             <td class="actions">
+                                <a href="#" class="btn-icon btn-detail" title="Chi tiết" onclick="xemChiTietSanPham(<?= $ma ?>)">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+
                                 <a href="#" class="btn-icon btn-edit" title="Sửa" onclick="openEditPopup(<?= $ma ?>); return false;">
                                     <i class="fas fa-edit"></i>
                                 </a>
@@ -351,11 +358,23 @@ function getTenDanhMucTheoMa($dsDanhMuc, $ma)
                         <td colspan="6">Không có sản phẩm nào để hiển thị.</td>
                     </tr>
                 <?php endif; ?>
+
+                <!-- Popup hiển thị chi tiết sản phẩm -->
+                <div id="popupChiTiet" class="popup-overlay" style="display:none; position:fixed; inset:0; background:#000000aa; justify-content:center; align-items:center; z-index:1000;">
+                    <div class="popup-content" style="background:#fff; padding:24px; width:800px; max-height:90vh; overflow:auto; border-radius:8px; position:relative;">
+                        <h3>Chi tiết sản phẩm</h3>
+                        <div id="thongTinSanPham" style="margin-bottom: 20px;"></div>
+                        <div id="anhBienTheSanPham"></div>
+                        <button onclick="document.getElementById('popupChiTiet').style.display='none'" style="position:absolute; top:10px; right:10px; background:#dc3545; color:#fff; border:none; padding:6px 12px; border-radius:4px;">Đóng</button>
+                    </div>
+                </div>
             </tbody>
         </table>
         <div style="margin-top: 20px; display: flex; justify-content: space-between;" id="paginationWrapper">
             <ul class="pagination" style="display: flex; list-style: none; padding: 0; gap: 4px;"></ul>
         </div>
+
+
     </div>
 
     <script>
@@ -492,8 +511,8 @@ function getTenDanhMucTheoMa($dsDanhMuc, $ma)
         const giaHiddenInput = document.getElementById("gia");
 
         giaHienThiInput.addEventListener("input", function() {
-            // Bỏ VND nếu có
-            const rawValue = this.value.replace(/[^\d]/g, ""); // loại tất cả ký tự không phải số
+            // Bỏ tất cả ký tự không phải số
+            const rawValue = this.value.replace(/[^\d]/g, "");
 
             if (rawValue === "") {
                 giaHiddenInput.value = "";
@@ -501,13 +520,16 @@ function getTenDanhMucTheoMa($dsDanhMuc, $ma)
                 return;
             }
 
-            const formatted = Number(rawValue).toLocaleString("en-US");
+            // Định dạng số theo kiểu Việt (dấu chấm phân cách hàng nghìn)
+            const formatted = Number(rawValue).toLocaleString("vi-VN");
+
             giaHiddenInput.value = rawValue;
             this.value = `${formatted} VND`;
         });
 
+
         function formatNumberWithCommas(number) {
-            return Number(number).toLocaleString("en-US");
+            return Number(number).toLocaleString("vi-VN");
         }
 
         function downloadExcel() {
@@ -524,6 +546,69 @@ function getTenDanhMucTheoMa($dsDanhMuc, $ma)
                     window.URL.revokeObjectURL(url);
                 })
                 .catch(err => alert("Lỗi khi tải file!"));
+        }
+
+        function xemChiTietSanPham(maSanPham) {
+            fetch('sanpham/lay_chi_tiet.php?ma_san_pham=' + maSanPham)
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.success) {
+                        alert(data.message || "Không thể tải chi tiết sản phẩm.");
+                        return;
+                    }
+
+                    const sp = data.san_pham;
+                    const anh = data.anh_bien_the;
+
+                    // Hiển thị thông tin sản phẩm
+                    document.getElementById("thongTinSanPham").innerHTML = `
+                <p><strong>Tên:</strong> ${sp.ten_san_pham}</p>
+                <p><strong>Giá:</strong> ${Number(sp.gia).toLocaleString()} đ</p>
+                <p><strong>Mô tả:</strong> ${sp.mo_ta}</p>
+                <p><strong>Ảnh đại diện:</strong></p>
+                <img src="https://cuddly-exotic-snake.ngrok-free.app${sp.anh_san_pham}" 
+                     style="max-width: 200px; max-height: 120px; border-radius: 6px; border:1px solid #ccc;" />
+            `;
+
+                    // Gọi API lấy danh sách màu
+                    fetch('sanpham/get_all_mau_sac.php')
+                        .then(res => res.json())
+                        .then(mauData => {
+                            const mauMap = {};
+                            mauData.forEach(m => mauMap[m.ma_mau] = m.ten_mau);
+
+                            // Gom ảnh theo màu
+                            const grouped = {};
+                            anh.forEach(a => {
+                                if (!grouped[a.ma_mau]) grouped[a.ma_mau] = [];
+                                grouped[a.ma_mau].push(a);
+                            });
+
+                            let html = '<p><strong>Biến thể sản phẩm:</strong></p>';
+                            for (const maMau in grouped) {
+                                const tenMau = mauMap[maMau] || `Màu ${maMau}`;
+                                html += `<div style="margin-bottom: 20px;">
+                                    <div style="font-weight:bold; margin-bottom:5px;">${tenMau}</div>
+                                    <div style="display: flex; flex-wrap: wrap; gap: 10px;">`;
+
+                                grouped[maMau].forEach(anhItem => {
+                                    html += `
+                                <img src="https://cuddly-exotic-snake.ngrok-free.app${anhItem.duong_dan}" 
+                                     style="width: 100px; height: 100px; object-fit: cover; border-radius: 6px; border:1px solid #ccc;">
+                            `;
+                                });
+
+                                html += `</div></div>`;
+                            }
+
+                            document.getElementById("anhBienTheSanPham").innerHTML = html;
+                            document.getElementById("popupChiTiet").style.display = "flex";
+                        });
+                })
+                .catch(err => {
+                    alert("Lỗi khi tải chi tiết sản phẩm");
+                    console.error(err);
+                });
         }
     </script>
 

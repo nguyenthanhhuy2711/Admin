@@ -181,9 +181,22 @@ $users = callAPI("getallUser");
 <body>
     <div class="main-content">
         <h2><i class="fas fa-user"></i> Danh sách tài khoản</h2>
-        <div style="text-align: right">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <!-- Bộ lọc bên trái -->
+            <div>
+                <label for="filterRole">Lọc theo vai trò:</label>
+                <select id="filterRole" onchange="filterUsers()" style="padding: 6px 10px; border-radius: 6px;">
+                    <option value="">Tất cả</option>
+                    <option value="admin">Admin</option>
+                    <option value="user">User</option>
+                </select>
+            </div>
+
+            <!-- Nút Thêm bên phải -->
             <a href="#" class="add-btn" onclick="openFormPopup(); return false;">Thêm tài khoản</a>
         </div>
+
+
 
 
         <div id="popupForm" class="popup-form">
@@ -226,8 +239,12 @@ $users = callAPI("getallUser");
                         <option value="admin">admin</option>
                     </select>
 
-                    <button type="submit">Thêm</button>
-                    <button type="button" onclick="closeFormPopup()">Hủy</button>
+
+                    <div style="text-align: right; margin-top: 16px;">
+                        <button type="submit">Thêm</button>
+                        <button type="button" onclick="closeFormPopup()">Hủy</button>
+                    </div>
+
                 </form>
 
             </div>
@@ -237,11 +254,11 @@ $users = callAPI("getallUser");
             <thead>
                 <tr>
                     <th class="center" style="width: 50px;">STT</th>
-                    <th style="width: 210px;">Tên người dùng</th>
-                    <th style="width: 200px;">Email</th>
+                    <th style="width: 200px;">Tên người dùng</th>
+                    <th style="width: 250px;">Email</th>
                     <th style="width: 100px;">SĐT</th>
-                    <th style="width: 250px;">Địa chỉ</th>
-                    <th style="width: 30px;">Vai trò</th>
+                    <th style="width: 215px;">Địa chỉ</th>
+                    <th style="width: 100px;">Vai trò</th>
                     <th style="width: 200px;">Ngày tạo</th>
                     <th class="center" style="width: 127px;">Thao tác</th>
                 </tr>
@@ -280,6 +297,10 @@ $users = callAPI("getallUser");
     </div>
 
     <script>
+        let currentPage = 1;
+        const rowsPerPage = 7;
+        const table = document.getElementById("tableBody");
+
         function openFormPopup() {
             document.getElementById('popupForm').style.display = 'block';
             document.getElementById('userForm').reset();
@@ -324,10 +345,9 @@ $users = callAPI("getallUser");
                 .then(data => {
                     const isSuccess = data.success === true || data.success === "true";
                     showToast(data.message, !isSuccess);
-
                     if (isSuccess) {
                         setTimeout(() => {
-                            window.location.reload(); // dùng reload cho chắc chắn
+                            window.location.reload();
                         }, 1000);
                     }
                 })
@@ -362,30 +382,56 @@ $users = callAPI("getallUser");
                     showToast('Lỗi khi gửi dữ liệu', true);
                 });
         });
-        let currentPage = 1;
-        const rowsPerPage = 7;
-        const table = document.getElementById("tableBody");
-        const rows = Array.from(table.querySelectorAll("tr"));
-        const totalPages = Math.ceil(rows.length / rowsPerPage);
 
-        function renderTablePage() {
-            rows.forEach((row, index) => {
-                row.style.display = (index >= (currentPage - 1) * rowsPerPage && index < currentPage * rowsPerPage) ? "" : "none";
+        function filterUsers() {
+            const selectedRole = document.getElementById("filterRole").value.toLowerCase();
+            const allRows = table.querySelectorAll("tr");
+
+            allRows.forEach(row => {
+                const roleCell = row.children[5]; // Cột vai trò
+                const role = roleCell?.textContent?.trim().toLowerCase() || "";
+                const isMatch = !selectedRole || role === selectedRole;
+                row.dataset.hidden = isMatch ? "false" : "true"; // Đánh dấu ẩn/thấy
             });
-            renderPagination();
+
+            currentPage = 1;
+            renderTablePage(); // render lại phân trang dựa trên dòng được đánh dấu
         }
 
-        function renderPagination() {
+        function getVisibleRows() {
+            return Array.from(table.querySelectorAll("tr")).filter(row => row.dataset.hidden !== "true");
+        }
+
+
+        function renderTablePage() {
+            const visibleRows = getVisibleRows();
+            const totalPages = Math.ceil(visibleRows.length / rowsPerPage);
+
+            visibleRows.forEach((row, index) => {
+                row.style.display = (index >= (currentPage - 1) * rowsPerPage && index < currentPage * rowsPerPage) ? "" : "none";
+            });
+
+            // Dòng bị ẩn do lọc thì luôn ẩn
+            const allRows = table.querySelectorAll("tr");
+            allRows.forEach(row => {
+                if (row.dataset.hidden === "true") {
+                    row.style.display = "none";
+                }
+            });
+
+            renderPagination(totalPages);
+        }
+
+
+        function renderPagination(totalPages) {
             const pagination = document.querySelector(".pagination");
             pagination.innerHTML = "";
 
-            // Previous
             const prevLi = document.createElement("li");
             prevLi.className = currentPage === 1 ? "disabled" : "";
             prevLi.innerHTML = `<a href="#" onclick="changePage(${currentPage - 1})">Previous</a>`;
             pagination.appendChild(prevLi);
 
-            // Số trang
             for (let i = 1; i <= totalPages; i++) {
                 const li = document.createElement("li");
                 li.className = i === currentPage ? "active" : "";
@@ -393,7 +439,6 @@ $users = callAPI("getallUser");
                 pagination.appendChild(li);
             }
 
-            // Next
             const nextLi = document.createElement("li");
             nextLi.className = currentPage === totalPages ? "disabled" : "";
             nextLi.innerHTML = `<a href="#" onclick="changePage(${currentPage + 1})">Next</a>`;
@@ -401,13 +446,13 @@ $users = callAPI("getallUser");
         }
 
         function changePage(page) {
+            const visibleRows = getVisibleRows();
+            const totalPages = Math.ceil(visibleRows.length / rowsPerPage);
             if (page < 1 || page > totalPages) return;
+
             currentPage = page;
             renderTablePage();
         }
-
-        // Tải lần đầu
-        renderTablePage();
 
         function showToast(message, isError = false) {
             const toast = document.createElement("div");
@@ -446,8 +491,11 @@ $users = callAPI("getallUser");
                 showToast(errorMsg, true);
                 sessionStorage.removeItem("toastError");
             }
+
+            filterUsers(); // Gọi để hiển thị lần đầu
         });
     </script>
+
 </body>
 
 </html>

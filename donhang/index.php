@@ -184,6 +184,13 @@ $donHangs = callAPI("adminGetAllDonHang") ?? [];
             border-color: #ccc;
             background-color: #f0f0f0;
         }
+
+        #ds-sanpham td:first-child {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 180px;
+        }
     </style>
 </head>
 
@@ -210,14 +217,10 @@ $donHangs = callAPI("adminGetAllDonHang") ?? [];
                     <th style="width: 120px;">Người dùng</th>
                     <th style="width: 120px;">Người nhận</th>
                     <th style="width: 120px;">SĐT</th>
-                    <th style="width: 250px;">Địa chỉ</th>
-                    <th style="width: 120px;">Voucher đơn</th>
-                    <th style="width: 120px;">Voucher ship</th>
-                    <th style="width: 150px;">Phương thức giao</th>
-                    <th style="width: 120px;">Phí vận chuyển</th>
-                    <th style="width: 120px;">Tổng tiền</th>
-                    <th style="width: 120px;">Trạng thái</th>
-                    <th style="width: 150px;">Ngày tạo</th>
+                    <th style="width: 200px;">Địa chỉ</th>
+                    <th style="width: 180px;">Phương thức giao</th>
+                    <th style="width: 90px;">Trạng thái</th>
+                    <th style="width: 170px;">Ngày tạo</th>
                     <th class="center" style="width: 120px;">Thao tác</th>
                 </tr>
             </thead>
@@ -232,23 +235,18 @@ $donHangs = callAPI("adminGetAllDonHang") ?? [];
                             <td><?= htmlspecialchars($dh['ten_nguoi_nhan']) ?></td>
                             <td><?= htmlspecialchars($dh['so_dien_thoai']) ?></td>
                             <td><?= htmlspecialchars($dh['dia_chi_giao_hang']) ?></td>
-                            <td><?= htmlspecialchars($dh['voucher_order'] ?? '-') ?></td>
-                            <td><?= htmlspecialchars($dh['voucher_ship'] ?? '-') ?></td>
                             <td><?= htmlspecialchars($dh['ten_phuong_thuc'] ?? '-') ?></td>
-                            <td><?= number_format($dh['chi_phi_van_chuyen'] ?? 0, 0, ',', '.') ?> VND</td>
-                            <td><?= number_format($dh['tong_tien'], 0, ',', '.') ?> VND</td>
                             <td><?= htmlspecialchars($dh['trang_thai']) ?></td>
                             <td><?= date('d/m/Y H:i:s', strtotime($dh['ngay_tao'])) ?></td>
                             <td class="center">
                                 <a href="#" class="btn-icon btn-detail" title="Chi tiết"
-                                    onclick="hienChiTietDonHang(<?= $dh['ma_don_hang'] ?>); return false;">
+                                    onclick="xemChiTietDonHang('<?= $dh['ma_don_hang'] ?>'); return false;">
                                     <i class="fas fa-eye"></i>
                                 </a>
                                 <a href="#" class="btn-icon btn-status" title="Cập nhật trạng thái"
-                                    onclick="capNhatTrangThaiTuDong(<?= $dh['ma_don_hang'] ?>, '<?= $dh['trang_thai'] ?>'); return false;">
+                                    onclick="capNhatTrangThaiTuDong('<?= $dh['ma_don_hang'] ?>', '<?= $dh['trang_thai'] ?>'); return false;">
                                     <i class="fas fa-sync-alt"></i>
                                 </a>
-
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -287,14 +285,62 @@ $donHangs = callAPI("adminGetAllDonHang") ?? [];
         </div>
     </div>
 
-    <div id="popupChiTiet" class="popup-form" style="display: none;">
-        <div class="form-container" style="width: 600px;">
-            <h3>Chi tiết đơn hàng</h3>
-            <div id="chiTietContent">Đang tải...</div>
-            <button type="button" onclick="closePopupChiTiet()">Đóng</button>
+    <div id="popupChiTietDonHang" class="popup-form" style="display:none;">
+        <div class="form-container" style="max-width: 900px; width: 95%; background:#fff; padding: 20px; border-radius: 8px;">
+            <h3 id="dh-title" style="font-size: 20px; margin-bottom: 12px;">Chi tiết đơn hàng</h3>
+
+            <!-- THÔNG BÁO -->
+            <div style="background: #f3f7ff; padding: 8px 12px; margin-bottom: 12px; border-left: 4px solid #007bff;">
+                <p id="dh-thong-bao" style="margin: 0; font-size: 14px; color: #333;">Đang xử lý...</p>
+            </div>
+
+            <!-- THÔNG TIN CHUNG -->
+            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                <div style="flex: 1; background: #f8f8f8; padding: 8px 10px; border-radius: 6px; font-size: 14px;">
+                    <h4 style="margin: 0 0 6px;">ĐỊA CHỈ NGƯỜI NHẬN</h4>
+                    <p><strong id="nguoi-nhan"></strong></p>
+                    <p id="dia-chi"></p>
+                    <p>Điện thoại: <span id="sdt"></span></p>
+                </div>
+                <div style="flex: 1; background: #f8f8f8; padding: 8px 10px; border-radius: 6px; font-size: 14px;">
+                    <h4 style="margin: 0 0 6px;">HÌNH THỨC GIAO HÀNG</h4>
+                    <p id="phuong-thuc-giao"></p>
+                    <p id="thoi-gian-giao"></p>
+                </div>
+                <div style="flex: 1; background: #f8f8f8; padding: 8px 10px; border-radius: 6px; font-size: 14px;">
+                    <h4 style="margin: 0 0 6px;">THANH TOÁN</h4>
+                    <p>Thanh toán khi nhận hàng</p>
+                </div>
+            </div>
+
+            <!-- DANH SÁCH SẢN PHẨM -->
+            <table style="width:100%; margin-top: 16px; border-collapse: collapse; font-size: 14px;">
+                <thead style="background: #007bff; color: white;">
+                    <tr>
+                        <th style="padding: 6px;">Sản phẩm</th>
+                        <th>Giá</th>
+                        <th>SL</th>
+                        <th>Tạm tính</th>
+                    </tr>
+                </thead>
+                <tbody id="ds-sanpham"></tbody>
+            </table>
+
+            <!-- TÍNH TIỀN -->
+            <div style="margin-top: 16px; text-align: right; font-size: 14px;">
+                <p>Tạm tính: <strong id="tam-tinh">0 đ</strong></p>
+                <p>Phí ship: <strong id="phi-ship">0 đ</strong></p>
+                <p>Giảm giá: <strong id="giam-gia">0 đ</strong></p>
+                <p style="font-size: 16px;">Tổng cộng: <strong id="tong-cong" style="color: red;">0 đ</strong></p>
+            </div>
+
+            <div style="text-align: right; margin-top: 12px;">
+                <button onclick="dongChiTietDonHang()" style="padding: 8px 14px; border: none; border-radius: 6px; font-weight: bold; background-color: #dc3545; color: white;">
+                    Đóng
+                </button>
+            </div>
         </div>
     </div>
-
 
 
     <script>
@@ -363,13 +409,13 @@ $donHangs = callAPI("adminGetAllDonHang") ?? [];
         }
 
         let currentPage = 1;
-        const rowsPerPage = 5;
+        const rowsPerPage = 7;
 
         function getFilteredRows() {
             const selectedStatus = document.getElementById("filterTrangThai").value;
             const allRows = Array.from(document.querySelectorAll("#tableBody tr"));
             return allRows.filter(row => {
-                const statusCell = row.children[11];
+                const statusCell = row.children[7];
                 if (!statusCell) return false;
                 const trangThai = statusCell.textContent.trim();
                 return selectedStatus === "tatca" || trangThai === selectedStatus;
@@ -422,24 +468,70 @@ $donHangs = callAPI("adminGetAllDonHang") ?? [];
             renderTablePage();
         }
 
-        function hienChiTietDonHang(maDonHang) {
-            document.getElementById("chiTietContent").innerHTML = "Đang tải...";
-            document.getElementById("popupChiTiet").style.display = "flex";
+        // ❗JS hàm xem chi tiết đơn hàng (chắc chắn gọi đúng popup + fill data)
+        function xemChiTietDonHang(maDonHang) {
+            document.getElementById("popupChiTietDonHang").style.display = "flex";
 
             fetch(`donhang/chi_tiet_don_hang.php?ma_don_hang=${maDonHang}`)
-                .then(res => res.text())
-                .then(html => {
-                    document.getElementById("chiTietContent").innerHTML = html;
+                .then(res => res.json())
+                .then(data => {
+                    const dh = data.don_hang;
+                    const list = data.chi_tiet;
+
+                    // Thông báo
+                    document.getElementById("dh-title").textContent = `Chi tiết đơn hàng  ${dh.ma_don_hang}`;
+                    document.getElementById("dh-thong-bao").textContent = `Trạng thái: ${dh.trang_thai}`;
+
+                    // Thông tin
+                    document.getElementById("nguoi-nhan").textContent = dh.ten_nguoi_nhan;
+                    document.getElementById("dia-chi").textContent = dh.dia_chi_giao_hang;
+                    document.getElementById("sdt").textContent = dh.so_dien_thoai;
+
+                    document.getElementById("phuong-thuc-giao").textContent = `${dh.ten_phuong_thuc} (${dh.chi_phi_van_chuyen.toLocaleString()} đ)`;
+                    document.getElementById("thoi-gian-giao").textContent = "Giao trước: " + new Date(dh.ngay_tao).toLocaleDateString("vi-VN");
+
+                    // Danh sách sản phẩm
+                    let tongTien = 0;
+                    const tbody = document.getElementById("ds-sanpham");
+                    tbody.innerHTML = "";
+                    list.forEach(sp => {
+                        const tamTinh = sp.so_luong * sp.gia;
+                        tongTien += tamTinh;
+
+                        const tr = document.createElement("tr");
+                        tr.innerHTML = `
+                    <td style="padding: 8px;">
+                        <img src="https://cuddly-exotic-snake.ngrok-free.app${sp.hinh_anh}" style="height: 50px; vertical-align: middle; margin-right: 10px; border-radius: 4px;">
+                        ${sp.ten_san_pham} <br>
+                        <small>Màu: ${sp.ten_mau} | Size: ${sp.kich_thuoc}</small>
+                    </td>
+                    <td>${Number(sp.gia).toLocaleString()} đ</td>
+                    <td>${sp.so_luong}</td>
+                    <td>${tamTinh.toLocaleString()} đ</td>
+                `;
+                        tbody.appendChild(tr);
+                    });
+
+                    // Tính tổng
+                    document.getElementById("tam-tinh").textContent = tongTien.toLocaleString() + " đ";
+                    document.getElementById("phi-ship").textContent = dh.chi_phi_van_chuyen.toLocaleString() + " đ";
+
+                    const giamGia = (dh.tong_tien + dh.chi_phi_van_chuyen) - tongTien;
+                    document.getElementById("giam-gia").textContent = giamGia.toLocaleString() + " đ";
+
+                    document.getElementById("tong-cong").textContent = (dh.tong_tien + dh.chi_phi_van_chuyen).toLocaleString() + " đ";
                 })
                 .catch(err => {
-                    document.getElementById("chiTietContent").innerHTML = "Không tải được chi tiết đơn hàng.";
+                    alert("Lỗi khi tải chi tiết đơn hàng");
                     console.error(err);
                 });
         }
 
-        function closePopupChiTiet() {
-            document.getElementById("popupChiTiet").style.display = "none";
+        function dongChiTietDonHang() {
+            document.getElementById("popupChiTietDonHang").style.display = "none";
         }
+
+
 
         function showToast(message, isError = false) {
             const toast = document.createElement("div");

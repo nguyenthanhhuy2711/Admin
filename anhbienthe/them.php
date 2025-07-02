@@ -8,60 +8,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $ma_san_pham = $_POST['ma_san_pham'] ?? null;
     $ma_mau = $_POST['ma_mau'] ?? null;
 
-    if ($ma_san_pham && $ma_mau && isset($_FILES['file']) && $_FILES['file']['error'] === 0) {
-        $file = $_FILES['file'];
-        $filename = basename($file['name']);
+    if ($ma_san_pham && $ma_mau && isset($_FILES['files'])) {
+        $files = $_FILES['files'];
         $uploadDir = __DIR__ . '/../../uploads/';
-        $uploadPath = $uploadDir . $filename;
+        $successCount = 0;
 
         if (!file_exists($uploadDir)) {
             mkdir($uploadDir, 0777, true);
         }
 
-        if (move_uploaded_file($file['tmp_name'], $uploadPath)) {
-            $data = [
-                'ma_san_pham' => (int)$ma_san_pham,
-                'ma_mau' => (int)$ma_mau,
-                'files' => new CURLFile($uploadPath)
-            ];
+        // Duyệt qua tất cả ảnh được chọn
+        for ($i = 0; $i < count($files['name']); $i++) {
+            if ($files['error'][$i] === 0) {
+                $filename = basename($files['name'][$i]);
+                $uploadPath = $uploadDir . $filename;
 
-            $curl = curl_init();
-            curl_setopt_array($curl, [
-                CURLOPT_URL => "$baseUrl/themAnhBienThe",
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_POST => true,
-                CURLOPT_POSTFIELDS => $data,
-            ]);
+                if (move_uploaded_file($files['tmp_name'][$i], $uploadPath)) {
+                    $data = [
+                        'ma_san_pham' => (int)$ma_san_pham,
+                        'ma_mau' => (int)$ma_mau,
+                        'files' => new CURLFile($uploadPath)
+                    ];
 
-            $response = curl_exec($curl);
-            $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-            curl_close($curl);
+                    $curl = curl_init();
+                    curl_setopt_array($curl, [
+                        CURLOPT_URL => "$baseUrl/themAnhBienThe",
+                        CURLOPT_RETURNTRANSFER => true,
+                        CURLOPT_POST => true,
+                        CURLOPT_POSTFIELDS => $data,
+                    ]);
 
-            if ($httpCode === 200) {
-                echo "<script>
-                    sessionStorage.setItem('toastSuccess', 'Thêm ảnh biến thể thành công');
-                    window.location.href = '/admin/index.php?page=anhbienthe';
-                </script>";
-                exit;
-            } else {
-                echo "<script>
-                    sessionStorage.setItem('toastError', 'Lỗi khi thêm ảnh biến thể');
-                    window.location.href = '/admin/index.php?page=anhbienthe';
-                </script>";
-                exit;
+                    $response = curl_exec($curl);
+                    $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+                    curl_close($curl);
+
+                    if ($httpCode === 200) {
+                        $successCount++;
+                    }
+                }
             }
-        } else {
-            echo "<script>
-                sessionStorage.setItem('toastError', 'Tải lên ảnh thất bại');
-                window.location.href = '/admin/index.php?page=anhbienthe';
-            </script>";
-            exit;
         }
-    } else {
-        echo "<script>
-            sessionStorage.setItem('toastError', 'Thiếu dữ liệu hoặc lỗi ảnh');
+
+        if ($successCount > 0) {
+            echo "<script>
+            sessionStorage.setItem('toastSuccess', 'Đã thêm $successCount ảnh thành công');
             window.location.href = '/admin/index.php?page=anhbienthe';
         </script>";
+        } else {
+            echo "<script>
+            sessionStorage.setItem('toastError', 'Không thêm được ảnh nào');
+            window.location.href = '/admin/index.php?page=anhbienthe';
+        </script>";
+        }
         exit;
     }
 }

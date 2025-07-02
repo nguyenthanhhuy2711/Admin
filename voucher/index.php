@@ -185,6 +185,34 @@ $dsVoucher = callAPI("getAllVoucher") ?? [];
             grid-template-columns: 1fr 1fr;
             gap: 16px;
         }
+
+        .input-with-unit {
+            position: relative;
+            display: inline-block;
+            width: 200px;
+        }
+
+        .input-with-unit input {
+            width: 100%;
+            padding-right: 40px;
+            height: 36px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+
+        .input-with-unit .unit {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            right: 10px;
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            color: #777;
+            pointer-events: none;
+        }
     </style>
 </head>
 
@@ -205,11 +233,10 @@ $dsVoucher = callAPI("getAllVoucher") ?? [];
         </div>
 
         <!-- POPUP SỬA VOUCHER -->
-        <!-- POPUP SỬA VOUCHER -->
         <div id="editPopup" class="popup-form" style="display: none;">
             <div class="form-container">
                 <h3>Sửa thời gian voucher</h3>
-                <form action="voucher/sua.php" method="post">
+                <form action="voucher/sua.php" method="post" onsubmit="return validateNgayVoucher()">
                     <input type="hidden" name="id" id="edit_id">
 
                     <label>Ngày bắt đầu:</label>
@@ -250,23 +277,26 @@ $dsVoucher = callAPI("getAllVoucher") ?? [];
                                 oninvalid="this.setCustomValidity('Vui lòng chọn loại voucher')"
                                 oninput="this.setCustomValidity('')">
                                 <option value="">-- Chọn loại --</option>
-                                <option value="order">order</option>
-                                <option value="ship">ship</option>
+                                <option value="order">Giảm đơn</option>
+                                <option value="ship">Giảm ship</option>
                             </select>
 
                             <label>Kiểu giảm:</label>
-                            <select name="kieu_giam" required
+                            <select name="kieu_giam" id="kieu_giam" required
                                 oninvalid="this.setCustomValidity('Vui lòng chọn kiểu giảm')"
-                                oninput="this.setCustomValidity('')">
+                                oninput="this.setCustomValidity(''); updateDonViGiam();">
                                 <option value="">-- Chọn kiểu giảm --</option>
-                                <option value="phan_tram">phan_tram</option>
-                                <option value="tien_mat">tien_mat</option>
+                                <option value="phan_tram">Phần trăm</option>
+                                <option value="tien_mat">Tiền mặt</option>
                             </select>
 
                             <label>Giá trị giảm:</label>
-                            <input type="number" step="0.01" name="gia_tri" required
-                                oninvalid="this.setCustomValidity('Vui lòng nhập giá trị giảm')"
-                                oninput="this.setCustomValidity('')">
+                            <div class="input-with-unit">
+                                <input type="number" step="1" name="gia_tri" id="gia_tri" required
+                                    oninvalid="this.setCustomValidity('Vui lòng nhập giá trị giảm')"
+                                    oninput="this.setCustomValidity('')">
+                                <span class="unit" id="don_vi_giam"></span>
+                            </div>
 
                             <label>Điều kiện áp dụng:</label>
                             <input type="number" step="0.01" name="dieu_kien_ap_dung">
@@ -324,13 +354,13 @@ $dsVoucher = callAPI("getAllVoucher") ?? [];
                     <th style="width: 50px">STT</th>
                     <th style="width: 100px">Mã voucher</th>
                     <th style="width: 100px">Mô tả</th>
-                    <th style="width: 80px">Loại</th>
+                    <th style="width: 100px">Loại</th>
                     <th style="width: 100px">Kiểu giảm</th>
                     <th style="width: 80px">Giá trị</th>
                     <th style="width: 50px">Điều kiện</th>
                     <th style="width: 50px">Số lượng</th>
-                    <th style="width: 150px">Ngày bắt đầu</th>
-                    <th style="width: 150px">Ngày kết thúc</th>
+                    <th style="width: 140px">Ngày bắt đầu</th>
+                    <th style="width: 140px">Ngày kết thúc</th>
                     <th style="width: 100px">Ảnh</th>
                     <th style="width: 100px">Trạng thái</th>
                     <th style="width: 118.5px">Thao tác</th>
@@ -345,8 +375,17 @@ $dsVoucher = callAPI("getAllVoucher") ?? [];
                             <td class="center"><?= $i++ ?></td>
                             <td class="center"><?= htmlspecialchars($v['ma_voucher']) ?></td>
                             <td><?= htmlspecialchars($v['mo_ta_hien_thi']) ?></td>
-                            <td class="center"><?= $v['loai'] ?></td>
-                            <td class="center"><?= $v['kieu_giam'] ?></td>
+                            <td class="center">
+                                <?php
+                                echo $v['loai'] === 'order' ? 'Giảm đơn' : ($v['loai'] === 'ship' ? 'Giảm ship' : '---');
+                                ?>
+                            </td>
+                            <td class="center">
+                                <?php
+                                echo $v['kieu_giam'] === 'phan_tram' ? 'Phần trăm' : ($v['kieu_giam'] === 'tien_mat' ? 'Tiền mặt' : '---');
+                                ?>
+                            </td>
+
                             <td class="center"><?= number_format($v['gia_tri'], 0, ',', '.') ?></td>
                             <td class="center"><?= number_format($v['dieu_kien_ap_dung'], 0, ',', '.') ?></td>
                             <td class="center"><?= $v['so_luong'] ?></td>
@@ -509,6 +548,38 @@ $dsVoucher = callAPI("getAllVoucher") ?? [];
         function filterByStatus() {
             currentPage = 1;
             renderTablePage();
+        }
+
+        function updateDonViGiam() {
+            const kieuGiam = document.getElementById('kieu_giam').value;
+            const donVi = document.getElementById('don_vi_giam');
+
+            if (kieuGiam === 'phan_tram') {
+                donVi.textContent = '%';
+            } else if (kieuGiam === 'tien_mat') {
+                donVi.textContent = 'VND';
+            } else {
+                donVi.textContent = '';
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', updateDonViGiam);
+
+        function validateNgayVoucher() {
+            const batDau = document.getElementById("edit_ngay_bat_dau").value;
+            const ketThuc = document.getElementById("edit_ngay_ket_thuc").value;
+
+            if (!batDau || !ketThuc) return true;
+
+            const start = new Date(batDau);
+            const end = new Date(ketThuc);
+
+            if (end <= start) {
+                showToast("Ngày kết thúc phải sau hơn ngày bắt đầu!", true);
+                return false;
+            }
+
+            return true;
         }
     </script>
 

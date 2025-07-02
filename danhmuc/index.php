@@ -189,8 +189,11 @@ $dsDanhMuc = callAPI("getAllMaDanhMuc")["danh_sach_danh_muc"] ?? [];
                         oninvalid="this.setCustomValidity('Vui lòng nhập tên danh mục')"
                         oninput="this.setCustomValidity('')">
 
-                    <button type="submit" id="formSubmitBtn">Thêm</button>
-                    <button type="button" onclick="closeFormPopup()">Hủy</button>
+                    <div style="text-align: right; margin-top: 16px;">
+                        <button type="submit" id="formSubmitBtn">Thêm</button>
+                        <button type="button" onclick="closeFormPopup()">Hủy</button>
+                    </div>
+
                 </form>
             </div>
         </div>

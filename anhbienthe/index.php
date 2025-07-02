@@ -297,12 +297,16 @@ $dsMauSac = callAPI("getAllMauSac") ?? [];
                     </select>
 
                     <label>Chọn ảnh:</label>
-                    <input type="file" name="file" accept="image/*" required
+                    <input type="file" name="files[]" accept="image/*" multiple required
                         oninvalid="this.setCustomValidity('Vui lòng chọn ảnh')"
                         oninput="this.setCustomValidity('')">
 
-                    <button type="submit">Thêm</button>
-                    <button type="button" onclick="closeFormPopup()">Hủy</button>
+
+                    <div style="text-align: right; margin-top: 16px;">
+                        <button type="submit">Thêm</button>
+                        <button type="button" onclick="closeFormPopup()">Hủy</button>
+                    </div>
+
                 </form>
 
             </div>

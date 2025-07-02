@@ -186,9 +186,12 @@ $dsMauSac = callAPI("getAllMauSac");
                     <input type="text" name="ten_mau" required
                         oninvalid="this.setCustomValidity('Vui lòng nhập tên màu')"
                         oninput="this.setCustomValidity('')">
+                    <div style="text-align: right; margin-top: 16px;">
+                        <button type="submit">Thêm</button>
+                        <button type="button" onclick="closeFormPopup()">Hủy</button>
+                    </div>
 
-                    <button type="submit">Thêm</button>
-                    <button type="button" onclick="closeFormPopup()">Hủy</button>
+
                 </form>
 
             </div>
