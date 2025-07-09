@@ -10,6 +10,8 @@ $dsDanhMuc = callAPI("getAllMaDanhMuc")["danh_sach_danh_muc"] ?? [];
     <meta charset="UTF-8">
     <title>Quản lý danh mục</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <style>
         * {
             box-sizing: border-box;
@@ -190,8 +192,8 @@ $dsDanhMuc = callAPI("getAllMaDanhMuc")["danh_sach_danh_muc"] ?? [];
                         oninput="this.setCustomValidity('')">
 
                     <div style="text-align: right; margin-top: 16px;">
-                        <button type="submit" id="formSubmitBtn">Thêm</button>
                         <button type="button" onclick="closeFormPopup()">Hủy</button>
+                        <button type="submit" id="formSubmitBtn">Thêm</button>
                     </div>
 
                 </form>
@@ -217,9 +219,13 @@ $dsDanhMuc = callAPI("getAllMaDanhMuc")["danh_sach_danh_muc"] ?? [];
                             <td class="center"><?= htmlspecialchars($dm['ngay_tao'] ?? '-') ?></td>
                             <td class="center">
                                 <!-- Nút xoá -->
-                                <a href="danhmuc/xoa.php?id=<?= $dm['ma_danh_muc'] ?>" class="btn-icon btn-delete" title="Xoá" onclick="return confirm('Xoá danh mục này?')">
+                                <a href="#"
+                                    class="btn-icon btn-delete"
+                                    title="Xoá"
+                                    onclick="confirmXoaDanhMuc(<?= $dm['ma_danh_muc'] ?>); return false;">
                                     <i class="fas fa-trash-alt"></i>
                                 </a>
+
                             </td>
 
 
@@ -294,6 +300,23 @@ $dsDanhMuc = callAPI("getAllMaDanhMuc")["danh_sach_danh_muc"] ?? [];
                 sessionStorage.removeItem("toastError");
             }
         });
+
+        function confirmXoaDanhMuc(id) {
+            Swal.fire({
+                title: 'Bạn có chắc chắn?',
+                text: 'Danh mục này sẽ bị xoá!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Xoá',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = 'danhmuc/xoa.php?id=' + id;
+                }
+            });
+        }
     </script>
 </body>
 

@@ -191,36 +191,78 @@ $donHangs = callAPI("adminGetAllDonHang") ?? [];
             text-overflow: ellipsis;
             max-width: 180px;
         }
+
+        .btn-export {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            font-size: 14px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-export:hover {
+            background-color: #218838;
+        }
+
+        #popupCapNhatTrangThai button {
+            margin: 5px;
+            padding: 8px 12px;
+            border: none;
+            background: #007bff;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        /* Ghi đè riêng cho nút "Đóng" bằng selector mạnh hơn */
+        #popupCapNhatTrangThai .btn-close-popup {
+            background-color: #dc3545 !important;
+            /* đỏ */
+            padding: 8px 16px;
+            margin-top: 10px;
+        }
+
+        /* Hover cho nút Đóng */
+        #popupCapNhatTrangThai .btn-close-popup:hover {
+            background-color: #c82333 !important;
+        }
     </style>
 </head>
 
 <body>
     <div class="main-content">
         <h2><i class="fas fa-receipt"></i> Danh sách đơn hàng</h2>
-        <div style="margin-bottom: 20px;">
-            <label for="filterTrangThai">Lọc theo trạng thái:</label>
-            <select id="filterTrangThai" style="padding: 8px; border-radius: 6px; margin-left: 10px;">
-                <option value="tatca">Tất cả</option>
-                <option value="Chờ xác nhận">Chờ xác nhận</option>
-                <option value="Chờ lấy hàng">Chờ lấy hàng</option>
-                <option value="Chờ giao hàng">Chờ giao hàng</option>
-                <option value="Đã giao">Đã giao</option>
-                <option value="Đã hủy">Đã hủy</option>
-            </select>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <div>
+                <label for="filterTrangThai">Lọc theo trạng thái:</label>
+                <select id="filterTrangThai" style="padding: 8px; border-radius: 6px; margin-left: 10px;">
+                    <option value="tatca">Tất cả</option>
+                    <option value="Chờ xác nhận">Chờ xác nhận</option>
+                    <option value="Chờ lấy hàng">Chờ lấy hàng</option>
+                    <option value="Chờ giao hàng">Chờ giao hàng</option>
+                    <option value="Đã giao">Đã giao</option>
+                    <option value="Đã hủy">Đã hủy</option>
+                </select>
+            </div>
+            <div>
+                <button type="button" class="btn-export" onclick="downloadExcel()">📤 Xuất Excel</button>
+            </div>
         </div>
 
         <table>
             <thead>
                 <tr>
                     <th class="center" style="width: 50px;">STT</th>
-                    <th style="width: 80px;">Mã ĐH</th>
+                    <th style="width: 150px;">Mã ĐH</th>
                     <th style="width: 120px;">Người dùng</th>
                     <th style="width: 120px;">Người nhận</th>
-                    <th style="width: 120px;">SĐT</th>
+                    <th style="width: 100px;">SĐT</th>
                     <th style="width: 200px;">Địa chỉ</th>
                     <th style="width: 180px;">Phương thức giao</th>
-                    <th style="width: 90px;">Trạng thái</th>
-                    <th style="width: 170px;">Ngày tạo</th>
+                    <th style="width: 100px;">Trạng thái</th>
+                    <th style="width: 100px;">Ngày tạo</th>
                     <th class="center" style="width: 120px;">Thao tác</th>
                 </tr>
             </thead>
@@ -243,8 +285,10 @@ $donHangs = callAPI("adminGetAllDonHang") ?? [];
                                     onclick="xemChiTietDonHang('<?= $dh['ma_don_hang'] ?>'); return false;">
                                     <i class="fas fa-eye"></i>
                                 </a>
-                                <a href="#" class="btn-icon btn-status" title="Cập nhật trạng thái"
-                                    onclick="capNhatTrangThaiTuDong('<?= $dh['ma_don_hang'] ?>', '<?= $dh['trang_thai'] ?>'); return false;">
+                                <a href="#"
+                                    class="btn-icon btn-status"
+                                    title="Cập nhật trạng thái"
+                                    onclick="moPopupCapNhatTrangThai('<?= htmlspecialchars($dh['ma_don_hang'], ENT_QUOTES) ?>', '<?= htmlspecialchars($dh['trang_thai'], ENT_QUOTES) ?>'); return false;">
                                     <i class="fas fa-sync-alt"></i>
                                 </a>
                             </td>
@@ -257,8 +301,6 @@ $donHangs = callAPI("adminGetAllDonHang") ?? [];
                 <?php endif; ?>
             </tbody>
         </table>
-
-        </table>
         <div style="margin-top: 20px; display: flex; justify-content: space-between;" id="paginationWrapper">
             <ul class="pagination" style="display: flex; list-style: none; padding: 0; gap: 4px;"></ul>
         </div>
@@ -266,24 +308,16 @@ $donHangs = callAPI("adminGetAllDonHang") ?? [];
     </div>
 
     <!-- Popup cập nhật trạng thái -->
-    <div id="popupCapNhat" class="popup-form" style="display: none;">
-        <div class="form-container">
-            <h3>Cập nhật trạng thái đơn hàng</h3>
-            <form id="capnhatForm">
-                <input type="hidden" name="ma_don_hang" id="capnhat_ma_don_hang">
-                <label>Trạng thái mới:</label>
-                <select name="trang_thai_moi" required>
-                    <option value="Chờ xác nhận">Chờ xác nhận</option>
-                    <option value="Chờ lấy hàng">Chờ lấy hàng</option>
-                    <option value="Chờ giao hàng">Chờ giao hàng</option>
-                    <option value="Đã giao">Đã giao</option>
-                    <option value="Đã hủy">Đã hủy</option>
-                </select>
-                <button type="submit">Cập nhật</button>
-                <button type="button" onclick="closePopup()">Hủy</button>
-            </form>
+    <div id="popupCapNhatTrangThai" style="display:none; position:fixed; top:30%; left:50%; transform:translate(-50%, -30%);
+     background:#fff; border: 2px solid #007bff; border-radius:8px; padding:20px; box-shadow:0 0 10px rgba(0,0,0,0.2); z-index:1000;">
+        <h3>Cập nhật trạng thái đơn hàng</h3>
+        <p id="maDonHangHienTai" style="display:none;"></p>
+        <div id="luaChonTrangThai"></div>
+        <div style="text-align: right; margin-top: 10px;">
+            <button class="btn-close-popup" onclick="dongPopup()">Đóng</button>
         </div>
     </div>
+
 
     <div id="popupChiTietDonHang" class="popup-form" style="display:none;">
         <div class="form-container" style="max-width: 900px; width: 95%; background:#fff; padding: 20px; border-radius: 8px;">
@@ -344,31 +378,48 @@ $donHangs = callAPI("adminGetAllDonHang") ?? [];
 
 
     <script>
-        function capNhatTrangThaiTuDong(maDonHang, trangThaiHienTai) {
-            const nextTrangThaiMap = {
-                "Chờ xác nhận": "Chờ lấy hàng",
-                "Chờ lấy hàng": "Chờ giao hàng",
-                "Chờ giao hàng": "Đã giao"
+        function moPopupCapNhatTrangThai(maDonHang, trangThaiHienTai) {
+            const optionsMap = {
+                "Chờ xác nhận": ["Chờ lấy hàng", "Đã hủy"],
+                "Chờ lấy hàng": ["Chờ xác nhận", "Chờ giao hàng"],
+                "Chờ giao hàng": ["Chờ lấy hàng", "Đã giao"]
             };
 
             if (trangThaiHienTai === "Đã giao" || trangThaiHienTai === "Đã hủy") {
-                showToast("Không thể cập nhật đơn này nữa!", true);
+                showToast("Không thể thay đổi trạng thái đơn hàng này", true);
                 return;
             }
 
-            const trangThaiMoi = nextTrangThaiMap[trangThaiHienTai];
-            if (!trangThaiMoi) {
-                showToast("Không xác định được trạng thái kế tiếp", true);
-                return;
-            }
+            const popup = document.getElementById("popupCapNhatTrangThai");
+            document.getElementById("maDonHangHienTai").innerText = maDonHang;
 
-            const formData = new FormData();
-            formData.append("ma_don_hang", maDonHang);
-            formData.append("trang_thai_moi", trangThaiMoi);
+            const options = optionsMap[trangThaiHienTai] || [];
+            const html = options.map(trangThai => `
+        <button onclick="capNhatTrangThai('${maDonHang}', '${trangThai}')">${trangThai}</button>
+    `).join(" ");
+
+            document.getElementById("luaChonTrangThai").innerHTML = html;
+
+            popup.style.display = "block";
+        }
+
+        function dongPopup() {
+            document.getElementById("popupCapNhatTrangThai").style.display = "none";
+        }
+
+        function capNhatTrangThai(maDonHang, trangThaiMoi) {
+            const data = {
+                ma_don_hang: maDonHang, // ✅ Bỏ parseInt, gửi chuỗi như ban đầu
+                trang_thai_moi: trangThaiMoi
+            };
+
 
             fetch("donhang/capnhat.php", {
                     method: "POST",
-                    body: formData
+                    headers: {
+                        "Content-Type": "application/json" // ⚠️ QUAN TRỌNG
+                    },
+                    body: JSON.stringify(data)
                 })
                 .then(res => res.json())
                 .then(data => {
@@ -378,35 +429,13 @@ $donHangs = callAPI("adminGetAllDonHang") ?? [];
                     }
                 })
                 .catch(err => {
-                    console.error("Lỗi cập nhật:", err);
-                    showToast("Có lỗi xảy ra khi cập nhật", true);
+                    console.error("Lỗi:", err);
+                    showToast("Lỗi khi cập nhật trạng thái", true);
                 });
+
+            dongPopup();
         }
 
-        document.getElementById('capnhatForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const formData = new FormData(this);
-
-            fetch('donhang/capnhat.php', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(res => res.json())
-                .then(data => {
-                    alert(data.message);
-                    if (data.success) {
-                        window.location.reload();
-                    }
-                })
-                .catch(err => {
-                    alert('Lỗi khi gửi yêu cầu');
-                    console.error(err);
-                });
-        });
-
-        function closePopup() {
-            document.getElementById('popupCapNhat').style.display = 'none';
-        }
 
         let currentPage = 1;
         const rowsPerPage = 7;
@@ -578,6 +607,22 @@ $donHangs = callAPI("adminGetAllDonHang") ?? [];
 
             renderTablePage(); // Tải dữ liệu ban đầu
         });
+
+        function downloadExcel() {
+            fetch('donhang/xuat_excel.php')
+                .then(response => response.blob())
+                .then(blob => {
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'danhsach_donhang.xlsx'; // đổi tên file .xlsx
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    window.URL.revokeObjectURL(url);
+                })
+                .catch(err => alert("Lỗi khi tải file!"));
+        }
     </script>
 
 </body>

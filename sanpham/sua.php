@@ -7,6 +7,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $moTa = $_POST['mo_ta'] ?? '';
     $gia = $_POST['gia'] ?? 0;
     $maDanhMuc = $_POST['ma_danh_muc'] ?? '';
+    $trangThai = isset($_POST['trang_thai']) ? (int)$_POST['trang_thai'] : 1; // ✅ Sửa tại đây
 
     if (!$maSanPham) {
         echo "<script>
@@ -24,16 +25,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'mo_ta' => $moTa,
         'gia' => $gia,
         'ma_danh_muc' => $maDanhMuc,
-        '_method' => 'PUT' // 👈 Quan trọng
+        'trang_thai' => $trangThai,
+        '_method' => 'PUT'
     ];
 
-    // Nếu có file ảnh mới thì gửi kèm
-    if (!empty($_FILES['file']['tmp_name']) && is_uploaded_file($_FILES['file']['tmp_name'])) {
-        $file = $_FILES['file']['tmp_name'];
-        $filename = $_FILES['file']['name'];
-        $postData['file'] = new CURLFile($file, mime_content_type($file), $filename);
+    // Gửi ảnh nếu có
+    if (!empty($_FILES['anh_dai_dien']['tmp_name']) && is_uploaded_file($_FILES['anh_dai_dien']['tmp_name'])) {
+        $tmpName = $_FILES['anh_dai_dien']['tmp_name'];
+        $filename = $_FILES['anh_dai_dien']['name'];
+        $postData['file'] = new CURLFile($tmpName, mime_content_type($tmpName), $filename);
     }
 
+    // Gửi API
     $curl = curl_init();
     curl_setopt_array($curl, [
         CURLOPT_URL => $apiUrl,

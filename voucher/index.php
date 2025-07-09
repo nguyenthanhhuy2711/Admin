@@ -213,6 +213,83 @@ $dsVoucher = callAPI("getAllVoucher") ?? [];
             color: #777;
             pointer-events: none;
         }
+
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+        }
+
+        .popup-content {
+            background: white;
+            padding: 24px;
+            border-radius: 10px;
+            width: 80%;
+            max-height: 90%;
+            overflow-y: auto;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .voucher-info {
+            display: flex;
+            justify-content: space-between;
+            gap: 40px;
+            margin-bottom: 20px;
+        }
+
+        .info-left {
+            flex: 1;
+            font-size: 15px;
+        }
+
+        .info-right img {
+            max-height: 160px;
+        }
+
+        .styled-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .styled-table th,
+        .styled-table td {
+            border: 1px solid #ccc;
+            padding: 8px 12px;
+            text-align: center;
+        }
+
+        .styled-table thead {
+            background-color: #f0f0f0;
+        }
+
+        .styled-table tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .btn-close-popup {
+            background-color: #e74c3c;
+            /* Đỏ tươi */
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .btn-close-popup:hover {
+            background-color: #c0392b;
+            /* Đỏ đậm hơn khi hover */
+        }
     </style>
 </head>
 
@@ -245,6 +322,9 @@ $dsVoucher = callAPI("getAllVoucher") ?? [];
                     <label>Ngày kết thúc:</label>
                     <input type="datetime-local" name="ngay_ket_thuc" id="edit_ngay_ket_thuc" required>
 
+                    <label>Số lượng:</label>
+                    <input type="number" name="so_luong" id="edit_so_luong" min="1" required>
+
                     <div style="text-align:right; margin-top: 10px">
                         <button type="submit">Cập nhật</button>
                         <button type="button" onclick="closeEditPopup()">Hủy</button>
@@ -253,7 +333,47 @@ $dsVoucher = callAPI("getAllVoucher") ?? [];
             </div>
         </div>
 
+        <!-- POPUP CHI TIẾT VOUCHER -->
+        <div id="voucherDetailPopup" class="popup-overlay" style="display:none;">
+            <div class="popup-content">
+                <h2>Chi tiết Voucher</h2>
+                <div class="voucher-info">
+                    <div class="info-left">
+                        <p><strong>Mã voucher:</strong> <span id="detail_ma_voucher"></span></p>
+                        <p><strong>Mô tả hiển thị:</strong> <span id="detail_mo_ta_hien_thi"></span></p>
+                        <p><strong>Loại:</strong> <span id="detail_loai"></span></p>
+                        <p><strong>Kiểu giảm:</strong> <span id="detail_kieu_giam"></span></p>
+                        <p><strong>Giá trị:</strong> <span id="detail_gia_tri"></span></p>
+                        <p><strong>Điều kiện áp dụng:</strong> <span id="detail_dieu_kien"></span></p>
+                        <p><strong>Số lượng:</strong> <span id="detail_so_luong"></span></p>
+                        <p><strong>Ngày bắt đầu:</strong> <span id="detail_ngay_bat_dau"></span></p>
+                        <p><strong>Ngày kết thúc:</strong> <span id="detail_ngay_ket_thuc"></span></p>
+                        <p><strong>Trạng thái:</strong> <span id="detail_trang_thai"></span></p>
+                    </div>
+                </div>
 
+                <hr>
+
+                <h3>Người dùng đã nhận voucher</h3>
+                <table id="ds_nguoi_dung_voucher" class="styled-table">
+                    <thead>
+                        <tr>
+                            <th>STT</th>
+                            <th>Tên</th>
+                            <th>Đã sử dụng</th>
+                            <th>Ngày sử dụng</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Dữ liệu đổ bằng JS -->
+                    </tbody>
+                </table>
+                <div style="text-align: right; margin-top: 20px;">
+                    <button class="btn-close-popup" onclick="document.getElementById('voucherDetailPopup').style.display='none'">Đóng</button>
+                </div>
+
+            </div>
+        </div>
 
         <!-- Popup form -->
         <div id="popupForm" class="popup-form">
@@ -330,20 +450,13 @@ $dsVoucher = callAPI("getAllVoucher") ?? [];
                                 <option value="0">Không</option>
                                 <option value="1">Có</option>
                             </select>
-
-                            <label>Trạng thái:</label>
-                            <select name="trang_thai"
-                                oninvalid="this.setCustomValidity('Vui lòng chọn trạng thái')"
-                                oninput="this.setCustomValidity('')">
-                                <option value="hoat_dong">Hoạt động</option>
-                                <option value="tam_ngung">Tạm ngưng</option>
-                            </select>
                         </div>
                     </div>
 
                     <div style="text-align:right; margin-top: 10px">
-                        <button type="submit">Thêm</button>
+
                         <button type="button" onclick="closeFormPopup()">Hủy</button>
+                        <button type="submit">Thêm</button>
                     </div>
                 </form>
             </div>
@@ -362,8 +475,8 @@ $dsVoucher = callAPI("getAllVoucher") ?? [];
                     <th style="width: 140px">Ngày bắt đầu</th>
                     <th style="width: 140px">Ngày kết thúc</th>
                     <th style="width: 100px">Ảnh</th>
-                    <th style="width: 100px">Trạng thái</th>
-                    <th style="width: 118.5px">Thao tác</th>
+                    <th style="width: 108px">Trạng thái</th>
+                    <th style="width: 110px">Thao tác</th>
                 </tr>
             </thead>
 
@@ -398,8 +511,16 @@ $dsVoucher = callAPI("getAllVoucher") ?? [];
                                     Không có
                                 <?php endif; ?>
                             </td>
-                            <td class="center"><?= $v['trang_thai'] ?></td>
+                            <td class="center" data-trang-thai="<?= $v['trang_thai'] ?>">
+                                <?= $v['trang_thai'] === 'tam_ngung' ? 'Tạm ngưng' : ($v['trang_thai'] === 'hoat_dong' ? 'Hoạt động' : $v['trang_thai']) ?>
+                            </td>
+
                             <td class="center">
+                                <a href="#" class="btn-icon btn-detail" title="Chi tiết"
+                                    onclick="xemChiTietVoucher(<?= htmlspecialchars($v['id']) ?>); return false;">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+
                                 <a href="#" class="btn-icon btn-edit" title="Sửa"
                                     onclick="openEditPopup(<?= $v['id'] ?>, '<?= $v['ngay_bat_dau'] ?>', '<?= $v['ngay_ket_thuc'] ?>'); return false;">
                                     <i class="fas fa-edit"></i>
@@ -428,17 +549,20 @@ $dsVoucher = callAPI("getAllVoucher") ?? [];
             document.getElementById('popupForm').style.display = 'none';
         }
 
-        function openEditPopup(id, start, end) {
+        function openEditPopup(id, start, end, soLuong) {
             document.getElementById('edit_id').value = id;
 
             const startInput = document.getElementById('edit_ngay_bat_dau');
             const endInput = document.getElementById('edit_ngay_ket_thuc');
+            const soLuongInput = document.getElementById('edit_so_luong');
 
             startInput.value = start ? start.replace(' ', 'T') : '';
             endInput.value = end ? end.replace(' ', 'T') : '';
+            soLuongInput.value = soLuong || '';
 
             document.getElementById('editPopup').style.display = 'block';
         }
+
 
 
         function closeEditPopup() {
@@ -452,8 +576,9 @@ $dsVoucher = callAPI("getAllVoucher") ?? [];
             const status = document.getElementById("filterStatus").value;
             const allRows = Array.from(document.querySelectorAll("#tableBody tr"));
             return allRows.filter(row => {
-                const statusText = row.children[11]?.innerText.trim();
-                return !status || statusText === status;
+                const statusAttr = row.children[11]?.getAttribute("data-trang-thai");
+                return !status || statusAttr === status;
+
             });
         }
 
@@ -580,6 +705,136 @@ $dsVoucher = callAPI("getAllVoucher") ?? [];
             }
 
             return true;
+        }
+        document.getElementById('voucherForm').addEventListener('submit', function(e) {
+            let valid = true;
+            const form = this;
+
+            // ===== 1. Ngày bắt đầu =====
+            const ngayBatDau = form.querySelector('[name="ngay_bat_dau"]');
+            if (!ngayBatDau.value) {
+                ngayBatDau.setCustomValidity('Vui lòng chọn ngày bắt đầu');
+                ngayBatDau.reportValidity();
+                valid = false;
+            } else {
+                ngayBatDau.setCustomValidity('');
+            }
+
+            // ===== 2. Ngày kết thúc =====
+            const ngayKetThuc = form.querySelector('[name="ngay_ket_thuc"]');
+            if (!ngayKetThuc.value) {
+                if (valid) {
+                    ngayKetThuc.setCustomValidity('Vui lòng chọn ngày kết thúc');
+                    ngayKetThuc.reportValidity();
+                }
+                valid = false;
+            } else {
+                ngayKetThuc.setCustomValidity('');
+            }
+
+            // So sánh ngày bắt đầu và ngày kết thúc
+            if (ngayBatDau.value && ngayKetThuc.value) {
+                const start = new Date(ngayBatDau.value);
+                const end = new Date(ngayKetThuc.value);
+                if (end <= start) {
+                    if (valid) {
+                        ngayKetThuc.setCustomValidity('Ngày kết thúc phải sau ngày bắt đầu');
+                        ngayKetThuc.reportValidity();
+                    }
+                    valid = false;
+                } else {
+                    ngayKetThuc.setCustomValidity('');
+                }
+            }
+
+            // ===== 3. Hình ảnh =====
+            const hinhAnh = form.querySelector('[name="hinh_anh"]');
+            if (!hinhAnh.files || hinhAnh.files.length === 0) {
+                if (valid) {
+                    hinhAnh.setCustomValidity('Vui lòng chọn hình ảnh');
+                    hinhAnh.reportValidity();
+                }
+                valid = false;
+            } else {
+                hinhAnh.setCustomValidity('');
+            }
+
+            // ===== 4. Hiển thị tự động =====
+            const hienThi = form.querySelector('[name="hien_thi_auto"]');
+            if (!hienThi.value) {
+                hienThi.setCustomValidity('Vui lòng chọn hiển thị tự động');
+                hienThi.reportValidity();
+                valid = false;
+            } else {
+                hienThi.setCustomValidity('');
+            }
+
+            // ===== 5. Điều kiện áp dụng (nếu có thì phải >= 0) =====
+            const dieuKien = form.querySelector('[name="dieu_kien_ap_dung"]');
+            if (dieuKien.value && parseFloat(dieuKien.value) < 0) {
+                dieuKien.setCustomValidity('Điều kiện áp dụng phải >= 0');
+                dieuKien.reportValidity();
+                valid = false;
+            } else {
+                dieuKien.setCustomValidity('');
+            }
+
+            // Ngăn submit nếu có lỗi
+            if (!valid) e.preventDefault();
+        });
+
+        function xemChiTietVoucher(id) {
+            fetch('voucher/chi_tiet_voucher.php?id=' + id)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        const v = data.voucher;
+                        const dsNguoiDung = data.ds_nguoi_dung ?? [];
+
+                        // --- HIỂN THỊ THÔNG TIN VOUCHER ---
+                        document.getElementById('detail_ma_voucher').innerText = v.ma_voucher;
+                        document.getElementById('detail_mo_ta_hien_thi').innerText = v.mo_ta_hien_thi;
+                        document.getElementById('detail_loai').innerText = v.loai === 'order' ? 'Giảm đơn' : 'Giảm ship';
+                        document.getElementById('detail_kieu_giam').innerText = v.kieu_giam === 'phan_tram' ? 'Phần trăm' : 'Tiền mặt';
+                        document.getElementById('detail_gia_tri').innerText = new Intl.NumberFormat('vi-VN').format(v.gia_tri);
+                        document.getElementById('detail_dieu_kien').innerText = new Intl.NumberFormat('vi-VN').format(v.dieu_kien_ap_dung);
+                        document.getElementById('detail_so_luong').innerText = v.so_luong;
+                        document.getElementById('detail_ngay_bat_dau').innerText = v.ngay_bat_dau ?? '-';
+                        document.getElementById('detail_ngay_ket_thuc').innerText = v.ngay_ket_thuc ?? '-';
+                        document.getElementById('detail_trang_thai').innerText =
+                            v.trang_thai === 'hoat_dong' ? 'Hoạt động' : (v.trang_thai === 'tam_ngung' ? 'Tạm ngưng' : 'Hết hạn');;
+                        // --- DANH SÁCH NGƯỜI DÙNG ---
+                        const tbody = document.querySelector('#ds_nguoi_dung_voucher tbody');
+                        tbody.innerHTML = '';
+                        if (dsNguoiDung.length === 0) {
+                            tbody.innerHTML = '<tr><td colspan="5">Chưa có ai sử dụng</td></tr>';
+                        } else {
+                            dsNguoiDung.forEach((nguoi, index) => {
+                                const tr = document.createElement('tr');
+                                tr.innerHTML = `
+                            <td>${index + 1}</td>
+                            <td>${nguoi.ten_nguoi_dung}</td>
+                            <td>${nguoi.da_su_dung ? '✓' : 'Chưa'}</td>
+                            <td>${nguoi.ngay_su_dung ?? '-'}</td>
+                        `;
+                                tbody.appendChild(tr);
+                            });
+                        }
+
+                        // --- HIỆN POPUP ---
+                        document.getElementById('voucherDetailPopup').style.display = 'flex';
+                    } else {
+                        showToast(data.message || 'Không thể lấy dữ liệu voucher', 'error');
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    showToast('Lỗi hệ thống khi lấy chi tiết voucher', 'error');
+                });
+        }
+
+        function closeVoucherDetailPopup() {
+            document.getElementById('voucherDetailPopup').style.display = 'none';
         }
     </script>
 

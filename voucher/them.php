@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $so_luong = (int)($_POST['so_luong'] ?? 1);
     $ngay_bat_dau = formatDateTimeLocal($_POST['ngay_bat_dau'] ?? '');
     $ngay_ket_thuc = formatDateTimeLocal($_POST['ngay_ket_thuc'] ?? '');
-    $hien_thi_auto = isset($_POST['hien_thi_auto']) ? (bool)$_POST['hien_thi_auto'] : false;
+    $hien_thi_auto = isset($_POST['hien_thi_auto']) ? true : false;
     $trang_thai = trim($_POST['trang_thai'] ?? 'hoat_dong');
     $nguoi_tao = $_SESSION['user_id'] ?? 1;
 
@@ -44,7 +44,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         "hien_thi_auto" => $hien_thi_auto,
         "trang_thai" => $trang_thai,
         "nguoi_tao" => $nguoi_tao,
-        // Gửi file ảnh với CURLFile
         "hinh_anh" => new CURLFile(
             $_FILES['hinh_anh']['tmp_name'],
             $_FILES['hinh_anh']['type'],
@@ -64,25 +63,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $err = curl_error($curl);
     curl_close($curl);
 
-    // Xử lý lỗi curl
     if ($err) {
         echo "<script>alert('Gọi API thất bại: " . addslashes($err) . "'); history.back();</script>";
         exit;
     }
 
-    // Phân tích kết quả JSON
     $result = json_decode($response, true);
 
     if (isset($result['message'])) {
         echo "<script>
-        sessionStorage.setItem('toastSuccess', 'Thêm voucher thành công');
-        window.location.href = '../index.php?page=voucher';
-    </script>";
+            sessionStorage.setItem('toastSuccess', 'Thêm voucher thành công');
+            window.location.href = '../index.php?page=voucher';
+        </script>";
     } else {
         $error = $result['detail'] ?? 'Lỗi khi thêm voucher';
+        if (str_contains($error, 'tồn tại')) {
+            $error = "Mã voucher đã tồn tại. Vui lòng chọn mã khác.";
+        }
         echo "<script>
-        sessionStorage.setItem('toastError', " . json_encode($error) . ");
-        history.back();
-    </script>";
+            sessionStorage.setItem('toastError', " . json_encode($error) . ");
+            history.back();
+        </script>";
     }
 }

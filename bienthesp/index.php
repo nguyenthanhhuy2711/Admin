@@ -76,12 +76,26 @@ $dsSanPham = callAPI("getallSanPham") ?? [];
             border-color: #ccc;
             background-color: #f0f0f0;
         }
+
+        .btn-export {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            font-size: 14px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-export:hover {
+            background-color: #218838;
+        }
     </style>
 </head>
 
 <body>
     <div class="main-content">
-        <h2><i class="fas fa-warehouse"></i> Quản lý biến thể sản phẩm</h2>
+        <h2><i class="fas fa-warehouse"></i> Quản lý kho sản phẩm</h2>
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <div>
                 <label for="selectFilter">Lọc theo sản phẩm:</label>
@@ -91,6 +105,9 @@ $dsSanPham = callAPI("getallSanPham") ?? [];
                         <option value="<?= htmlspecialchars($sp['ten_san_pham']) ?>"><?= htmlspecialchars($sp['ten_san_pham']) ?></option>
                     <?php endforeach; ?>
                 </select>
+            </div>
+            <div style="text-align: right; margin-bottom: 10px;">
+                <button type="button" class="btn-export" onclick="downloadExcel()">📤 Xuất Excel</button>
             </div>
         </div>
 
@@ -135,7 +152,7 @@ $dsSanPham = callAPI("getallSanPham") ?? [];
                     <td>${item.ten_san_pham}</td>
                     <td>${item.kich_thuoc}</td>
                     <td>${item.ten_mau}</td>
-                    <td>${item.so_luong_ton}</td>
+                    <td style="color: ${item.so_luong_ton < 5 ? 'red' : 'inherit'}">${item.so_luong_ton}</td>
                 `;
                 tableBody.appendChild(row);
             });
@@ -185,6 +202,22 @@ $dsSanPham = callAPI("getallSanPham") ?? [];
             filteredData = [...data];
             renderTablePage();
         });
+
+        function downloadExcel() {
+            fetch('bienthesp/xuat_excel.php')
+                .then(response => response.blob())
+                .then(blob => {
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'kho_sanpham.xlsx'; // đổi tên file .xlsx
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    window.URL.revokeObjectURL(url);
+                })
+                .catch(err => alert("Lỗi khi tải file!"));
+        }
     </script>
 </body>
 

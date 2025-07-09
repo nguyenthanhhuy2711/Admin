@@ -25,18 +25,31 @@ include __DIR__ . '/includes/connect.php';
             <?php endif; ?>
             <ul>
                 <hr style="border: none; height: 1px; background-color: #ccc;">
+
+                <!-- Dashboard & System -->
                 <li><a href="index.php?page=dashboard"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+                <li><a href="index.php?page=taikhoan"><i class="fas fa-user"></i> Tài khoản</a></li>
+
+                <!-- Sản phẩm -->
                 <li><a href="index.php?page=sanpham"><i class="fas fa-box"></i> Sản phẩm</a></li>
+                <li><a href="index.php?page=danhmuc"><i class="fas fa-list"></i> Danh mục</a></li>
                 <li><a href="index.php?page=anhbienthe"><i class="fas fa-image"></i> Biến thể sản phẩm</a></li>
+                <li><a href="index.php?page=mausac"><i class="fas fa-palette"></i> Màu sắc</a></li>
                 <li><a href="index.php?page=bienthesp"><i class="fas fa-warehouse"></i> Kho</a></li>
                 <li><a href="index.php?page=phieunhap"><i class="fas fa-file-invoice"></i> Nhập kho</a></li>
+
+                <!-- Giao dịch -->
                 <li><a href="index.php?page=donhang"><i class="fas fa-receipt"></i> Đơn hàng</a></li>
-                <li><a href="index.php?page=taikhoan"><i class="fas fa-user"></i> Tài khoản</a></li>
-                <li><a href="index.php?page=danhmuc"><i class="fas fa-list"></i> Danh mục</a></li>
-                <li><a href="index.php?page=mausac"><i class="fas fa-palette"></i> Màu sắc</a></li>
                 <li><a href="index.php?page=voucher"><i class="fas fa-ticket-alt"></i> Voucher</a></li>
+
+                <!-- Phản hồi -->
+                <li><a href="index.php?page=danhgia"><i class="fas fa-star-half-alt"></i> Đánh giá</a></li>
+                <li><a href="index.php?page=baocaovipham"><i class="fas fa-exclamation-triangle"></i> Báo cáo vi phạm</a></li>
+
+                <!-- Logout -->
                 <li><a href="logout.php"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a></li>
             </ul>
+
         </div>
 
         <div class="main-content">

@@ -19,6 +19,7 @@ $dsMauSac = callAPI("getAllMauSac") ?? [];
     <meta charset="UTF-8">
     <title>Quản lý ảnh biến thể</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -254,7 +255,6 @@ $dsMauSac = callAPI("getAllMauSac") ?? [];
     <div class="main-content">
         <h2><i class="fas fa-images"></i> Danh sách ảnh biến thể</h2>
         <div style="display: flex; justify-content: space-between; align-items: center;">
-            <!-- Bộ lọc bên trái -->
             <div>
                 <label for="selectFilter">Lọc theo sản phẩm:</label>
                 <select id="selectFilter" onchange="filterByProduct()" style="padding: 8px; border-radius: 6px; border: 1px solid #ccc; width: 250px;">
@@ -264,117 +264,57 @@ $dsMauSac = callAPI("getAllMauSac") ?? [];
                     <?php endforeach; ?>
                 </select>
             </div>
-
-            <!-- Nút thêm bên phải -->
             <div>
                 <a href="#" class="add-btn" onclick="openFormPopup(); return false;">Thêm ảnh biến thể</a>
             </div>
         </div>
 
-        <!-- Popup Form -->
         <div id="popupForm" class="popup-form" style="display: none;">
             <div class="form-container">
                 <h3>Thêm ảnh biến thể</h3>
                 <form action="/admin/anhbienthe/them.php" method="post" enctype="multipart/form-data">
                     <label>Sản phẩm:</label>
-                    <select name="ma_san_pham" class="styled-select" required
-                        oninvalid="this.setCustomValidity('Vui lòng chọn sản phẩm')"
-                        oninput="this.setCustomValidity('')">
+                    <select name="ma_san_pham" class="styled-select" required>
                         <option value="">-- Chọn sản phẩm --</option>
                         <?php foreach ($dsSanPham as $sp): ?>
                             <option value="<?= $sp['ma_san_pham'] ?>"><?= htmlspecialchars($sp['ten_san_pham']) ?></option>
                         <?php endforeach; ?>
                     </select>
-
                     <label>Màu sắc:</label>
-                    <select name="ma_mau" class="styled-select" required
-                        oninvalid="this.setCustomValidity('Vui lòng chọn màu sắc')"
-                        oninput="this.setCustomValidity('')">
+                    <select name="ma_mau" class="styled-select" required>
                         <option value="">-- Chọn màu sắc --</option>
                         <?php foreach ($dsMauSac as $mau): ?>
                             <option value="<?= $mau['ma_mau'] ?>"><?= htmlspecialchars($mau['ten_mau']) ?></option>
                         <?php endforeach; ?>
                     </select>
-
                     <label>Chọn ảnh:</label>
-                    <input type="file" name="files[]" accept="image/*" multiple required
-                        oninvalid="this.setCustomValidity('Vui lòng chọn ảnh')"
-                        oninput="this.setCustomValidity('')">
-
-
+                    <input type="file" name="files[]" accept="image/*" multiple required>
                     <div style="text-align: right; margin-top: 16px;">
-                        <button type="submit">Thêm</button>
                         <button type="button" onclick="closeFormPopup()">Hủy</button>
+                        <button type="submit">Thêm</button>
                     </div>
-
                 </form>
-
             </div>
         </div>
-
 
         <table>
             <thead>
                 <tr>
                     <th style="width: 100px;">STT</th>
-                    <th style="width: 400px;">Tên sản phẩm</th>
+                    <th style="width: 300px;">Tên sản phẩm</th>
                     <th style="width: 200px;">Màu sắc</th>
-                    <th style="width: 400px;">Ảnh</th>
+                    <th style="width: 500px;">Ảnh</th>
                     <th style="width: 150px;">Thao tác</th>
                 </tr>
-
             </thead>
-            <tbody id="tableBody">
-                <?php if (!empty($dsAnh) && is_array($dsAnh)): ?>
-                    <?php $i = 1;
-                    foreach ($dsAnh as $anh): ?>
-                        <tr>
-                            <td class="center"><?= $i++ ?></td>
-                            <td>
-                                <?php
-                                $sp = array_filter($dsSanPham, fn($s) => $s['ma_san_pham'] == $anh['ma_san_pham']);
-                                echo htmlspecialchars(reset($sp)['ten_san_pham'] ?? '');
-                                ?>
-                            </td>
-                            <td class="center">
-                                <?php
-                                $tenMau = '';
-                                foreach ($dsMauSac as $mau) {
-                                    if ($mau['ma_mau'] == $anh['ma_mau']) {
-                                        $tenMau = $mau['ten_mau'];
-                                        break;
-                                    }
-                                }
-                                echo htmlspecialchars($tenMau);
-                                ?>
-                            </td>
-
-                            <td class="center">
-                                <img src="<?= $baseUrl . htmlspecialchars($anh['duong_dan']) ?>" alt="Ảnh">
-                            </td>
-                            <td class="center">
-                                <a href="/admin/anhbienthe/xoa.php?
-                                ma_san_pham=<?= $anh['ma_san_pham'] ?>&
-                                ma_mau=<?= $anh['ma_mau'] ?>"
-                                    class="btn-icon btn-delete"
-                                    onclick="return confirm('Xoá ảnh này?')">
-                                    <i class="fas fa-trash-alt"></i>
-                                </a>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                <?php else: ?>
-                    <tr>
-                        <td colspan="5">Không có dữ liệu ảnh biến thể</td>
-                    </tr>
-                <?php endif; ?>
-            </tbody>
-            <div id="toast" class="toast hidden"></div>
+            <tbody id="tableBody"></tbody>
         </table>
+        <div id="toast" class="toast hidden"></div>
         <div style="margin-top: 20px; display: flex; justify-content: space-between;" id="paginationWrapper">
             <ul class="pagination" style="display: flex; list-style: none; padding: 0; gap: 4px;"></ul>
         </div>
     </div>
+
     <script>
         function openFormPopup() {
             document.getElementById("popupForm").style.display = "block";
@@ -387,16 +327,35 @@ $dsMauSac = callAPI("getAllMauSac") ?? [];
         let currentPage = 1;
         const rowsPerPage = 6;
 
-        function getFilteredRows() {
-            const selectedProduct = document.getElementById("selectFilter").value.toLowerCase();
+        function groupAnhBySanPhamVaMau() {
+            const grouped = [];
 
-            return dsAnhRaw.filter(anh => {
-                const sp = dsSanPham.find(sp => sp.ma_san_pham === anh.ma_san_pham);
-                const tenSanPham = sp?.ten_san_pham?.toLowerCase() || "";
-                return !selectedProduct || tenSanPham === selectedProduct;
+            dsAnhRaw.forEach(anh => {
+                const key = `${anh.ma_san_pham}_${anh.ma_mau}`;
+                let group = grouped.find(g => g.key === key);
+                if (!group) {
+                    group = {
+                        key,
+                        ma_san_pham: anh.ma_san_pham,
+                        ma_mau: anh.ma_mau,
+                        ds_anh: []
+                    };
+                    grouped.push(group);
+                }
+                group.ds_anh.push(anh.duong_dan);
             });
+
+            return grouped;
         }
 
+        function getFilteredRows() {
+            const selectedProduct = document.getElementById("selectFilter").value.toLowerCase();
+            return groupAnhBySanPhamVaMau().filter(group => {
+                const sp = dsSanPham.find(sp => sp.ma_san_pham === group.ma_san_pham);
+                const ten = sp?.ten_san_pham?.toLowerCase() || "";
+                return !selectedProduct || ten === selectedProduct;
+            });
+        }
 
         function renderTablePage(page = currentPage) {
             const filteredRows = getFilteredRows();
@@ -408,32 +367,31 @@ $dsMauSac = callAPI("getAllMauSac") ?? [];
             tableBody.innerHTML = "";
 
             const start = (currentPage - 1) * rowsPerPage;
-            const rowsToRender = filteredRows.slice(start, end = currentPage * rowsPerPage);
+            const rowsToRender = filteredRows.slice(start, start + rowsPerPage);
 
-            rowsToRender.forEach((anh, index) => {
-                const sp = dsSanPham.find(sp => sp.ma_san_pham === anh.ma_san_pham);
-                const mau = dsMauSac.find(m => m.ma_mau === anh.ma_mau);
+            rowsToRender.forEach((group, index) => {
+                const sp = dsSanPham.find(sp => sp.ma_san_pham === group.ma_san_pham);
+                const mau = dsMauSac.find(m => m.ma_mau === group.ma_mau);
                 const row = document.createElement("tr");
 
+                const htmlAnh = group.ds_anh.map(img => `<img src="<?= $baseUrl ?>${img}" style="height: 70px; margin: 4px; border-radius: 6px; border: 1px solid #ccc;">`).join("");
+
                 row.innerHTML = `
-            <td class="center">${start + index + 1}</td>
-            <td>${sp?.ten_san_pham || ""}</td>
-            <td class="center">${mau?.ten_mau || ""}</td>
-            <td class="center"><img src="${'<?= $baseUrl ?>' + anh.duong_dan}" alt="Ảnh"></td>
-            <td class="center">
-                <a href="/admin/anhbienthe/xoa.php?ma_san_pham=${anh.ma_san_pham}&ma_mau=${anh.ma_mau}"
-                    class="btn-icon btn-delete"
-                    onclick="return confirm('Xoá ảnh này?')">
-                    <i class="fas fa-trash-alt"></i>
-                </a>
-            </td>
-        `;
+                    <td class="center">${start + index + 1}</td>
+                    <td>${sp?.ten_san_pham || ""}</td>
+                    <td class="center">${mau?.ten_mau || ""}</td>
+                    <td class="center">${htmlAnh}</td>
+                    <td class="center">
+                        <a href="#" class="btn-icon btn-delete" onclick="confirmXoaAnh(${group.ma_san_pham}, ${group.ma_mau}); return false;">
+                            <i class="fas fa-trash-alt"></i>
+                        </a>
+                    </td>`;
+
                 tableBody.appendChild(row);
             });
 
             renderPagination(totalPages);
         }
-
 
         function renderPagination(totalPages) {
             const pagination = document.querySelector(".pagination");
@@ -479,21 +437,34 @@ $dsMauSac = callAPI("getAllMauSac") ?? [];
         window.addEventListener("DOMContentLoaded", () => {
             const successMsg = sessionStorage.getItem("toastSuccess");
             const errorMsg = sessionStorage.getItem("toastError");
-
             if (successMsg) {
-                showToast(successMsg, false);
+                showToast(successMsg);
                 sessionStorage.removeItem("toastSuccess");
             }
-
             if (errorMsg) {
                 showToast(errorMsg, true);
                 sessionStorage.removeItem("toastError");
             }
-
-            renderTablePage(); // ✅ render lần đầu
+            renderTablePage();
         });
-    </script>
 
+        function confirmXoaAnh(maSanPham, maMau) {
+            Swal.fire({
+                title: 'Bạn có chắc chắn?',
+                text: "Ảnh này sẽ bị xoá vĩnh viễn!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Xoá',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = `/admin/anhbienthe/xoa.php?ma_san_pham=${maSanPham}&ma_mau=${maMau}`;
+                }
+            });
+        }
+    </script>
 </body>
 
 </html>

@@ -7,11 +7,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id = $_POST['id'] ?? '';
     $ngay_bat_dau = $_POST['ngay_bat_dau'] ?? '';
     $ngay_ket_thuc = $_POST['ngay_ket_thuc'] ?? '';
+    $so_luong = $_POST['so_luong'] ?? '';
 
     $response = callAPI('capnhatThoiGianVoucher', 'POST', [
         'id' => $id,
         'ngay_bat_dau' => $ngay_bat_dau,
-        'ngay_ket_thuc' => $ngay_ket_thuc
+        'ngay_ket_thuc' => $ngay_ket_thuc,
+        'so_luong' => $so_luong
     ]);
 
     if (isset($response['message'])) {

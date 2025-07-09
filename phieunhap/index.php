@@ -287,13 +287,14 @@
             <table>
                 <thead>
                     <tr>
-                        <th style="width: 80px">STT</th>
-                        <th style="width: 150px">Mã phiếu</th>
-                        <th style="width: 200px">Người nhập</th>
-                        <th style="width: 200px">Ngày nhập</th>
-                        <th style="width: 150px">Tổng số lượng</th>
-                        <th style="width: 120px">Thao tác</th>
+                        <th style="width: 100px">STT</th>
+                        <th style="width: 200px">Mã phiếu</th>
+                        <th style="width: 250px">Người nhập</th>
+                        <th style="width: 250px">Ngày nhập</th>
+                        <th style="width: 200px">Tổng số lượng</th>
+                        <th style="width: 240px">Thao tác</th>
                     </tr>
+
                 </thead>
                 <tbody id="tableBody">
                     <?php if (is_array($dsPhieuNhap) && !empty($dsPhieuNhap)): ?>
@@ -438,8 +439,8 @@
                         </tbody>
                     </table>
                     <div style="text-align: right; margin-top: 16px;">
-                        <button type="submit">Nhập tất cả</button>
                         <button type="button" onclick="closeFormPopup()">Hủy</button>
+                        <button type="submit">Nhập kho</button>
                     </div>
 
                 </form>
@@ -483,17 +484,15 @@
                             alert("Dữ liệu không hợp lệ");
                             return;
                         }
-                        document.getElementById("ct-ma-phieu").textContent = `${maPhieuNhap}`;
 
-                        // Hiển thị thông tin chung
-                        document.getElementById("ct-nguoi-nhap").value = data.phieu_nhap.nguoi_nhap || "";
-                        document.getElementById("ct-ngay-nhap").value = data.phieu_nhap.ngay_nhap || "";
-                        document.getElementById("ct-tong-so-luong").value = data.phieu_nhap.tong_so_luong || 0;
+                        const info = data.phieu_nhap;
+                        document.getElementById("ct-ma-phieu").textContent = maPhieuNhap;
+                        document.getElementById("ct-nguoi-nhap").value = info.nguoi_nhap;
+                        document.getElementById("ct-ngay-nhap").value = new Date(info.ngay_nhap).toLocaleString('vi-VN');
+                        document.getElementById("ct-tong-so-luong").value = info.tong_so_luong;
 
-                        // Hiển thị chi tiết
                         const tbody = document.getElementById("tableChiTiet");
                         tbody.innerHTML = "";
-
                         data.chi_tiet.forEach(row => {
                             const tr = document.createElement("tr");
                             tr.innerHTML = `
@@ -512,8 +511,6 @@
                         console.error(err);
                     });
             }
-
-
 
             function dongChiTiet() {
                 document.getElementById("popupChiTiet").style.display = "none";
@@ -556,6 +553,7 @@
                     sessionStorage.removeItem('toastError');
                 }
             });
+
             let currentPage = 1;
             const rowsPerPage = 8;
             const table = document.getElementById("tableBody");

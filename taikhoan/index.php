@@ -11,6 +11,7 @@ $users = callAPI("getallUser");
     <meta charset="UTF-8">
     <title>Danh sách tài khoản</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -115,7 +116,7 @@ $users = callAPI("getallUser");
             padding: 20px;
             border-radius: 10px;
             width: 450px;
-            margin: 80px auto;
+            margin: 40px auto;
             border: 2px solid #007bff;
         }
 
@@ -196,9 +197,6 @@ $users = callAPI("getallUser");
             <a href="#" class="add-btn" onclick="openFormPopup(); return false;">Thêm tài khoản</a>
         </div>
 
-
-
-
         <div id="popupForm" class="popup-form">
             <div class="form-container">
                 <h3>Thêm tài khoản</h3>
@@ -211,8 +209,19 @@ $users = callAPI("getallUser");
                         oninput="this.setCustomValidity('')">
 
                     <label>Email:</label>
-                    <input type="email" name="email" required
-                        oninvalid="this.setCustomValidity('Vui lòng nhập email hợp lệ')"
+                    <div style="display: flex; align-items: stretch; gap: 8px;">
+                        <input type="email" name="email" id="emailField" required
+                            oninvalid="this.setCustomValidity('Vui lòng nhập email hợp lệ')"
+                            oninput="this.setCustomValidity('')" style="flex: 1; padding: 10px; height: 42px;">
+
+                        <button type="button" onclick="guiOTP()"
+                            style="padding: 0 14px; background: #007bff; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; height: 42px;">
+                            Gửi OTP
+                        </button>
+                    </div>
+                    <label>Mã OTP:</label>
+                    <input type="text" name="otp" id="otpField" required
+                        oninvalid="this.setCustomValidity('Vui lòng nhập mã OTP')"
                         oninput="this.setCustomValidity('')">
 
                     <label>Mật khẩu:</label>
@@ -241,14 +250,46 @@ $users = callAPI("getallUser");
 
 
                     <div style="text-align: right; margin-top: 16px;">
-                        <button type="submit">Thêm</button>
+
                         <button type="button" onclick="closeFormPopup()">Hủy</button>
+                        <button type="submit">Thêm</button>
                     </div>
 
                 </form>
 
             </div>
         </div>
+
+        <!-- ✅ FORM SỬA TÀI KHOẢN -->
+        <div id="editPopupForm" class="popup-form" style="display: none;">
+            <div class="form-container">
+                <h3>Sửa tài khoản</h3>
+                <form id="editUserForm" method="post"> <!-- ✅ KHÔNG có action -->
+                    <input type="hidden" name="ma_nguoi_dung" id="edit_ma_nguoi_dung">
+                    <label>Tên:</label>
+                    <input type="text" name="ten_nguoi_dung" id="edit_ten" required>
+                    <label>Email:</label>
+                    <input type="email" name="email" id="edit_email" required>
+                    <label>Mật khẩu (nếu đổi):</label>
+                    <input type="password" name="mat_khau" id="edit_mat_khau">
+                    <label>SĐT:</label>
+                    <input type="text" name="sdt" id="edit_sdt">
+                    <label>Địa chỉ:</label>
+                    <input type="text" name="dia_chi_mac_dinh" id="edit_dia_chi">
+                    <label>Vai trò:</label>
+                    <select name="vai_tro" id="edit_vai_tro">
+                        <option value="user">User</option>
+                        <option value="admin">Admin</option>
+                    </select>
+
+                    <div style="text-align:right; margin-top:16px;">
+                        <button type="submit">Cập nhật</button>
+                        <button type="button" onclick="closeEditForm()">Hủy</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
 
         <table>
             <thead>
@@ -277,8 +318,14 @@ $users = callAPI("getallUser");
                             <td><?= htmlspecialchars($user['vai_tro']) ?></td>
                             <td><?= htmlspecialchars($user['ngay_tao']) ?></td>
                             <td class="actions">
-                                <a href="#" class="btn-icon btn-edit" title="Sửa" onclick="openEditPopup(<?= $user['ma_nguoi_dung'] ?>); return false;"><i class="fas fa-edit"></i></a>
-                                <a href="#" class="btn-icon btn-delete" title="Xoá" onclick="xoaUser(<?= $user['ma_nguoi_dung'] ?>); return false;">
+                                <a href="#" class="btn-icon btn-edit" onclick="openEditPopup(<?= $user['ma_nguoi_dung'] ?>); return false;">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+
+                                <a href="#"
+                                    class="btn-icon btn-delete"
+                                    title="Xoá"
+                                    onclick="xoaUser(<?= $user['ma_nguoi_dung'] ?>); return false;">
                                     <i class="fas fa-trash-alt"></i>
                                 </a>
                             </td>
@@ -312,50 +359,96 @@ $users = callAPI("getallUser");
         }
 
         function openEditPopup(id) {
-            fetch('lay.php?id=' + id)
+            fetch('taikhoan/lay.php?id=' + id)
                 .then(res => res.json())
                 .then(data => {
                     if (data.success) {
                         const u = data.data;
-                        document.querySelector('[name="ma_nguoi_dung"]').value = u.ma_nguoi_dung;
-                        document.querySelector('[name="ten_nguoi_dung"]').value = u.ten_nguoi_dung;
-                        document.querySelector('[name="email"]').value = u.email;
-                        document.querySelector('[name="mat_khau"]').value = '';
-                        document.querySelector('[name="sdt"]').value = u.sdt;
-                        document.querySelector('[name="dia_chi_mac_dinh"]').value = u.dia_chi_mac_dinh;
-                        document.querySelector('[name="vai_tro"]').value = u.vai_tro;
-                        document.getElementById('popupForm').style.display = 'block';
+                        document.getElementById('edit_ma_nguoi_dung').value = u.ma_nguoi_dung;
+                        document.getElementById('edit_ten').value = u.ten_nguoi_dung;
+                        document.getElementById('edit_email').value = u.email;
+                        document.getElementById('edit_mat_khau').value = '';
+                        document.getElementById('edit_sdt').value = u.sdt;
+                        document.getElementById('edit_dia_chi').value = u.dia_chi_mac_dinh;
+                        document.getElementById('edit_vai_tro').value = u.vai_tro;
+
+                        document.getElementById('editPopupForm').style.display = 'block';
                     } else {
                         alert('Không tìm thấy người dùng');
                     }
                 });
         }
 
-        function xoaUser(id) {
-            if (!confirm("Bạn có chắc chắn muốn xoá người dùng này?")) return;
-
-            const formData = new FormData();
-            formData.append("ma_nguoi_dung", id);
-
-            fetch("taikhoan/xoa.php", {
-                    method: "POST",
-                    body: formData
-                })
-                .then(res => res.json())
-                .then(data => {
-                    const isSuccess = data.success === true || data.success === "true";
-                    showToast(data.message, !isSuccess);
-                    if (isSuccess) {
-                        setTimeout(() => {
-                            window.location.reload();
-                        }, 1000);
-                    }
-                })
-                .catch(error => {
-                    showToast("Xoá thất bại. Vui lòng thử lại.", true);
-                    console.error("Lỗi khi gọi API xoá:", error);
-                });
+        function closeEditForm() {
+            document.getElementById('editPopupForm').style.display = 'none';
         }
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('editUserForm').addEventListener('submit', function(e) {
+                e.preventDefault(); // ❌ Ngăn form tự submit
+
+                const form = e.target;
+                const formData = new FormData(form);
+
+                fetch('taikhoan/capnhat.php', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            sessionStorage.setItem('toastSuccess', 'Cập nhật tài khoản thành công');
+                        } else {
+                            sessionStorage.setItem('toastError', data.message || 'Cập nhật thất bại');
+                        }
+
+                        document.getElementById('editPopupForm').style.display = 'none';
+                        setTimeout(() => location.reload(), 100);
+                    })
+                    .catch(err => {
+                        console.error("❌ Fetch error:", err);
+                        sessionStorage.setItem('toastError', 'Lỗi mạng hoặc máy chủ: ' + err.message);
+                        setTimeout(() => location.reload(), 100);
+                    });
+            });
+        });
+
+        function xoaUser(maNguoiDung) {
+            Swal.fire({
+                title: 'Xác nhận xoá',
+                text: 'Bạn có chắc chắn muốn xoá người dùng này?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Xoá',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (!result.isConfirmed) return;
+
+                const formData = new FormData();
+                formData.append("ma_nguoi_dung", maNguoiDung);
+
+                fetch("taikhoan/xoa.php", {
+                        method: "POST",
+                        body: formData
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        const isSuccess = data.success === true || data.success === "true";
+                        showToast(data.message, !isSuccess);
+                        if (isSuccess) {
+                            setTimeout(() => {
+                                location.reload();
+                            }, 1000);
+                        }
+                    })
+                    .catch(err => {
+                        showToast("Xoá thất bại. Vui lòng thử lại.", true);
+                        console.error("Lỗi khi gọi API xoá:", err);
+                    });
+            });
+        }
+
 
         document.getElementById('userForm').addEventListener('submit', function(e) {
             e.preventDefault();
@@ -382,6 +475,7 @@ $users = callAPI("getallUser");
                     showToast('Lỗi khi gửi dữ liệu', true);
                 });
         });
+
 
         function filterUsers() {
             const selectedRole = document.getElementById("filterRole").value.toLowerCase();
@@ -494,6 +588,30 @@ $users = callAPI("getallUser");
 
             filterUsers(); // Gọi để hiển thị lần đầu
         });
+
+        function guiOTP() {
+            const email = document.getElementById("emailField").value;
+            if (!email) {
+                showToast("Vui lòng nhập email trước khi gửi OTP", true);
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("email", email);
+
+            fetch("taikhoan/gui_otp.php", {
+                    method: "POST",
+                    body: formData
+                })
+                .then(res => res.json())
+                .then(data => {
+                    showToast(data.message, !data.success);
+                })
+                .catch(err => {
+                    showToast("Lỗi khi gửi OTP", true);
+                    console.error("Gửi OTP lỗi:", err);
+                });
+        }
     </script>
 
 </body>

@@ -5,32 +5,48 @@ if (!function_exists('callAPI')) {
         $baseUrl = "https://cuddly-exotic-snake.ngrok-free.app/";
         $url = $baseUrl . $endpoint;
 
-        $headers = '';
-        $content = '';
+        $headers = [];
+        $payload = '';
 
         if ($contentType === 'json') {
-            $headers = "Content-Type: application/json";
-            $content = json_encode($data);
+            $headers[] = "Content-Type: application/json";
+            $payload = json_encode($data);
         } elseif ($contentType === 'form') {
-            $headers = "Content-Type: application/x-www-form-urlencoded";
-            $content = http_build_query($data);
+            $headers[] = "Content-Type: application/x-www-form-urlencoded";
+            $payload = http_build_query($data);
         }
 
-        $options = [
-            "http" => [
-                "method"  => $method,
-                "header"  => $headers,
-                "timeout" => 10
-            ]
-        ];
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_FAILONERROR, true); // Bắt lỗi HTTP
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);       // Timeout an toàn
 
-        if ($method === 'POST' || $method === 'PUT') {
-            $options["http"]["content"] = $content;
+        switch (strtoupper($method)) {
+            case 'POST':
+                curl_setopt($ch, CURLOPT_POST, true);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+                break;
+            case 'PUT':
+                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "PUT");
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+                break;
+            case 'DELETE':
+                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "DELETE");
+                break;
         }
 
-        $context = stream_context_create($options);
-        $response = @file_get_contents($url, false, $context);
+        if (!empty($headers)) {
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        }
 
-        return $response ? json_decode($response, true) : [];
+        $response = curl_exec($ch);
+
+        if (curl_errno($ch)) {
+            return ['detail' => curl_error($ch)];
+        }
+
+        curl_close($ch);
+
+        return json_decode($response, true);
     }
 }

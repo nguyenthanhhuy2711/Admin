@@ -12,6 +12,7 @@ $dsMauSac = callAPI("getAllMauSac");
     <meta charset="UTF-8">
     <title>Quản lý màu sắc</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -187,8 +188,8 @@ $dsMauSac = callAPI("getAllMauSac");
                         oninvalid="this.setCustomValidity('Vui lòng nhập tên màu')"
                         oninput="this.setCustomValidity('')">
                     <div style="text-align: right; margin-top: 16px;">
-                        <button type="submit">Thêm</button>
                         <button type="button" onclick="closeFormPopup()">Hủy</button>
+                        <button type="submit">Thêm</button>
                     </div>
 
 
@@ -214,9 +215,10 @@ $dsMauSac = callAPI("getAllMauSac");
                             <td class="center"><?= $i++ ?></td>
                             <td class="center"><?= htmlspecialchars($mau['ten_mau']) ?></td>
                             <td class="center">
-                                <a href="mausac/xoa.php?ma_mau=<?= $mau['ma_mau'] ?>" class="btn-icon btn-delete" title="Xoá" onclick="return confirm('Bạn có chắc muốn xoá màu này?')">
+                                <a href="#" class="btn-icon btn-delete" title="Xoá" onclick="confirmXoaMau(<?= $mau['ma_mau'] ?>)">
                                     <i class="fas fa-trash-alt"></i>
                                 </a>
+
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -276,6 +278,24 @@ $dsMauSac = callAPI("getAllMauSac");
                 sessionStorage.removeItem("toastError");
             }
         });
+
+        function confirmXoaMau(maMau) {
+            Swal.fire({
+                title: 'Bạn có chắc chắn?',
+                text: "Màu này sẽ bị xoá vĩnh viễn!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Xoá',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Chuyển trang để xoá
+                    window.location.href = `mausac/xoa.php?ma_mau=${maMau}`;
+                }
+            });
+        }
     </script>
 
 </body>
